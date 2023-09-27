@@ -12,7 +12,7 @@ function love.load()
   love.graphics.setLineWidth(2)
   obj_stack = {} 
   drawing = false
-  dragging = nil
+  prev_mouse_pos = {0, 0}
   current_color = palette.blue
   mode_list = UI:List(UI:Rect(10, 10, 110, 150), 'Mode')
     mode_list:add_element(UI:Label(UI:Rect(), 'Focus'))
@@ -50,9 +50,18 @@ function love.update(dt)
       last_point.x, last_point.y = love.mouse.getPosition() 
     end
   end
-  if dragging then
-    dragging.x, dragging.y = love.mouse.getPosition()
+  if mode_list.active_element.text == 'Edit' and love.mouse.isDown(1) then
+    for _,obj in ipairs(obj_stack) do
+      for _,p in ipairs(obj.p) do
+        if p.in_focus then 
+          p.x = p.x + love.mouse.getX() - prev_mouse_pos[1]
+          p.y = p.y + love.mouse.getY() - prev_mouse_pos[2]
+          chosen_obj = obj
+        end
+      end
+    end
   end
+  prev_mouse_pos = {love.mouse.getX(), love.mouse.getY()}
 end
 
 
@@ -87,21 +96,10 @@ end
 
 function love.mousepressed(x, y, button)
   if button > 1 then return end
-  if mode_list.active_element.text == 'Edit' then
-    for _,v in ipairs(obj_stack) do
-      for _,p in ipairs(v.p) do
-        p.in_focus = true
-        if p:same_with(x,y) then 
-          dragging = p 
-          chosen_obj = v
-        end
-      end
-    end
-    return
-  end
-  drawing = true
   local temp_obj = nil
-  if mode_list.active_element.text == 'Line' then 
+  if mode_list.active_element.text == 'Edit' then 
+    return
+  elseif mode_list.active_element.text == 'Line' then 
     temp_obj = Line(Point(x,y), Point(x,y))
   elseif mode_list.active_element.text == 'Rectangle' then 
     temp_obj = Rectangle(Point(x,y), Point(x,y))
@@ -111,6 +109,8 @@ function love.mousepressed(x, y, button)
     temp_obj = Points()
     table.insert(temp_obj.p, Point(x,y))
   end
+  drawing = true
+  chosen_obj = temp_obj
   if temp_obj then
     temp_obj.color = current_color
     if mode_list.active_element.text == 'Focus' then
@@ -123,7 +123,6 @@ end
 
 function love.mousereleased(x, y, button)
   if button > 1 then return end
-  dragging = nil
   drawing = false
   if mode_list.active_element.text == 'Focus' then
     local focus_rect = obj_stack[#obj_stack]
