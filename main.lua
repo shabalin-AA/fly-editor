@@ -37,8 +37,6 @@ end
 
 
 function love.update(dt) 
-  mode_list:update()
-  color_list:update()
   state_line:update()
   if drawing then
     local last_obj = obj_stack[#obj_stack]
@@ -126,6 +124,7 @@ function love.mousereleased(x, y, button)
   drawing = false
   if mode_list.active_element.text == 'Focus' then
     local focus_rect = obj_stack[#obj_stack]
+    local one_focused = false
     for _,v in ipairs(obj_stack) do
       v.in_focus = true
       for _,p in ipairs(v.p) do
@@ -134,10 +133,14 @@ function love.mousereleased(x, y, button)
                      p.y > math.min(focus_rect.p[1].y, focus_rect.p[2].y) and
                      p.y < math.max(focus_rect.p[1].y, focus_rect.p[2].y)
         v.in_focus = v.in_focus and p.in_focus
+        one_focused = one_focused or p.in_focus
       end
     end
     table.remove(obj_stack)
+    if one_focused then mode_list:set_active('Edit') end
   end
+  mode_list:mousereleased(x, y, button)
+  color_list:mousereleased(x, y, button)
   current_color = palette[color_list.active_element.text]
 end
 

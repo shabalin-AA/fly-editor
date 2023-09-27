@@ -70,14 +70,17 @@ function UI:List(background_rect, name)
     for _,v in ipairs(self.elements) do
       if v.text == name then return v end
     end
+    return nil
   end
 
   this.label = UI:Label(UI:Rect(), name)
   this:add_element(this.label)
   
   function this:update()
-    if not love.mouse.isDown(1) then return end
-    local x,y = love.mouse.getPosition()
+    --
+  end
+
+  function this:mousereleased(x, y, button)
     local active = x < self.background_rect.x+self.background_rect.width and 
                    x > self.background_rect.x and
                    y < self.background_rect.y+self.background_rect.height and 
@@ -91,6 +94,17 @@ function UI:List(background_rect, name)
         self.active_element = v 
         v.linecolor = self.active_color
         break
+      end
+    end
+  end
+
+  function this:set_active(name)
+    for _,v in ipairs(self.elements) do
+      if v.text == name then 
+        self.active_element = v
+        v.linecolor = self.active_color
+      else 
+        v.linecolor = palette.lightbrown
       end
     end
   end
