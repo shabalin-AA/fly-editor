@@ -5,6 +5,7 @@ require 'rectangle'
 require 'palette'
 require 'points'
 require 'serialize'
+require 'state_line'
 
 
 function love.load()
@@ -26,14 +27,7 @@ function love.load()
     color_list:add_element(UI:Label(UI:Rect(), 'green'))
     color_list:add_element(UI:Label(UI:Rect(), 'blue'))
     color_list:add_element(UI:Label(UI:Rect(), 'lightbrown'))
-  state_line = UI:Rect(0,0,0,0, palette.bone)
-  function state_line:update()
-    local font_h = love.graphics.getFont():getHeight() + 8
-    state_line.y = love.graphics.getHeight() - font_h
-    state_line.width = love.graphics.getWidth()
-    state_line.height = font_h
-  end
-  chosen_obj = nil
+  state_line:load()
 end
 
 
@@ -55,7 +49,7 @@ function love.update(dt)
         if p.in_focus then 
           p.x = p.x + love.mouse.getX() - prev_mouse_pos[1]
           p.y = p.y + love.mouse.getY() - prev_mouse_pos[2]
-          chosen_obj = obj
+          state_line.chosen_obj = obj
         end
       end
     end
@@ -69,27 +63,6 @@ function love.draw()
   mode_list:draw()
   color_list:draw()
   state_line:draw()
-  love.graphics.setColor(palette.grey.r, palette.grey.g, palette.grey.b)
-  love.graphics.printf(
-    string.format('%d; %d', love.mouse.getX(), love.mouse.getY()), 
-    0, state_line.y+4, state_line.width-4, 'right'
-  )
-  if not chosen_obj then return end
-  if chosen_obj.type == 'Line' then 
-    local A = chosen_obj.p[2].y - chosen_obj.p[1].y
-    local B = -chosen_obj.p[2].x + chosen_obj.p[1].x
-    local C = chosen_obj.p[1].y * B - chosen_obj.p[1].x * A
-    local function gcd(a, b)
-      if a == 0 then return b end
-      return gcd(math.fmod(b, a), a)
-    end
-    local gcd_ABC = gcd(A, gcd(B, C))
-    A, B, C = A/gcd_ABC, B/gcd_ABC, C/gcd_ABC
-    love.graphics.print(
-      string.format('%s: %dx + %dy + %d = 0', chosen_obj.type, A, B, C),
-      0 + 4, state_line.y + 4
-    )
-  end
 end
 
 
@@ -109,7 +82,7 @@ function love.mousepressed(x, y, button)
     table.insert(temp_obj.p, Point(x,y))
   end
   drawing = true
-  chosen_obj = temp_obj
+  state_line.chosen_obj = temp_obj
   if temp_obj then
     temp_obj.color = current_color
     if mode_list.active_element.text == 'Focus' then

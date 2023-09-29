@@ -8,6 +8,7 @@ function UI:Rect(x, y, width, height, fillcolor, linecolor)
   this.y = y
   this.width = width
   this.height = height
+  
   if fillcolor then this.fillcolor = fillcolor
   else this.fillcolor = palette.grey end
   if linecolor then this.linecolor = linecolor
@@ -48,21 +49,20 @@ function UI:Label(rect, text, text_color)
 end
 
 
-function UI:List(background_rect, name)
-  local this = {}
-  this.background_rect = background_rect
+function UI:List(rect, name)
+  local this =rect
   this.elements = {}
   this.active_color = palette.blue
   
   function this:add_element(label)
     self.active_element = label
     table.insert(self.elements, label)
-    local element_height = self.background_rect.height / #self.elements
+    local element_height = self.height / #self.elements
     for i,v in ipairs(self.elements) do
-      v.width = self.background_rect.width
+      v.width = self.width
       v.height = element_height
-      v.y = self.background_rect.y + (i-1) * element_height
-      v.x = self.background_rect.x
+      v.y = self.y + (i-1) * element_height
+      v.x = self.x
     end
   end
 
@@ -81,13 +81,13 @@ function UI:List(background_rect, name)
   end
 
   function this:mousereleased(x, y, button)
-    local active = x < self.background_rect.x+self.background_rect.width and 
-                   x > self.background_rect.x and
-                   y < self.background_rect.y+self.background_rect.height and 
-                   y > self.background_rect.y
+    local active = x < self.x + self.width and 
+                   x > self.x and
+                   y < self.y + self.height and 
+                   y > self.y
     if not active then return end
     for i,v in ipairs(self.elements) do
-      v.linecolor = self.background_rect.linecolor
+      v.linecolor = self.linecolor
     end
     for i,v in ipairs(self.elements) do
       if i > 1 and y < v.y + v.height then 
@@ -108,13 +108,69 @@ function UI:List(background_rect, name)
       end
     end
   end
+
+  this.draw_rect = this.draw
   
   function this:draw()
-    self.background_rect:draw()
+    self:draw_rect()
     for _,v in ipairs(self.elements) do v:draw() end
     love.graphics.setLineWidth(3)
     self.active_element:draw()
     love.graphics.setLineWidth(2)
+  end
+  
+  return this
+end
+
+
+function UI:TextInput(rect, text_color) 
+  local this = rect
+  this.text = {}
+  this.cursor = 0
+  this.text_color = text_color
+  this.active = false
+
+  this.draw_rect = this.draw
+
+  function this:draw()
+    if self.active then 
+      self.linecolor = palette.blue
+      love.graphics.setLineWidth(3)
+    else 
+      self.linecolor = palette.grey 
+      love.graphics.setLineWidth(2)
+    end
+    self:draw_rect()
+    love.graphics.setColor(self.text_color.r, self.text_color.g, self.text_color.b)
+    love.graphics.printf(table.concat(self.text), self.x+4, self.y+4, self.width, 'left')
+    -- cursor
+    if self.active then
+      love.graphics.setLineWidth(1)
+      love.graphics.setColor(0,0,0)
+      local cursor_x = self.x+5 + love.graphics.getFont():getWidth(string.sub(table.concat(self.text), 1, cursor))
+      love.graphics.line(cursor_x, self.y+3, cursor_x, self.y-3 + self.height)
+      love.graphics.setLineWidth(2)
+    end
+  end
+
+  function this:mousereleased(x, y, button)
+    self.active = 
+      x > self.x and
+      x < self.x + self.width and
+      y > self.y and
+      y < self.y + self.height
+  end
+
+  function this:keypressed(key)
+    if not self.active then return end
+    if key == 'backspace' then
+      table.remove(self.text, self.cursor)
+      self.cursor = self.cursor - 1
+      if self.cursor < 0 then self.cursor = 0 end
+    else
+      self.cursor = self.cursor + 1
+      table.insert(self.text, self.cursor, key)
+    end
   end
   
   return this
