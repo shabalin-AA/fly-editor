@@ -4,6 +4,7 @@ require 'ui'
 require 'rectangle'
 require 'palette'
 require 'points'
+require 'serialize'
 
 
 function love.load()
@@ -41,7 +42,7 @@ function love.update(dt)
   if drawing then
     local last_obj = obj_stack[#obj_stack]
     if last_obj then 
-      if last_obj.type == 'points' then
+      if last_obj.type == 'Points' then
         table.insert(last_obj.p, Point())
       end
       local last_point = last_obj.p[#last_obj.p]
@@ -74,13 +75,13 @@ function love.draw()
     0, state_line.y+4, state_line.width-4, 'right'
   )
   if not chosen_obj then return end
-  if chosen_obj.type == 'line' then 
+  if chosen_obj.type == 'Line' then 
     local A = chosen_obj.p[2].y - chosen_obj.p[1].y
     local B = -chosen_obj.p[2].x + chosen_obj.p[1].x
     local C = chosen_obj.p[1].y * B - chosen_obj.p[1].x * A
     local function gcd(a, b)
       if a == 0 then return b end
-      return gcd(math.mod(b, a), a)
+      return gcd(math.fmod(b, a), a)
     end
     local gcd_ABC = gcd(A, gcd(B, C))
     A, B, C = A/gcd_ABC, B/gcd_ABC, C/gcd_ABC
@@ -145,27 +146,13 @@ function love.mousereleased(x, y, button)
 end
 
 
-function deserialize(line)
-  local words = {}
-  for word in line:gmatch("%S+") do table.insert(words, word) end
-  local p1 = Point(tonumber(words[1]), tonumber(words[2]))
-  local p2 = Point(tonumber(words[3]), tonumber(words[4]))
-  local color = {r=tonumber(words[5]), g=tonumber(words[6]), b=tonumber(words[7])}
-  local obj = nil
-  if words[8] == 'line' then obj = Line(p1, p2) end
-  if words[8] == 'rect' then obj = Rectangle(p1, p2) end
-  if obj then obj.color = color end
-  return obj
-end
-
-
 function love.keypressed(key)
   if love.keyboard.isDown('lctrl') then
     if key == 'z' then table.remove(obj_stack) end
     local save_filename = 'save'
     if key == 's' then 
       love.filesystem.write(save_filename, '')
-      for _,v in ipairs(obj_stack) do v:serialize(save_filename) end
+      for _,v in ipairs(obj_stack) do serialize(v, save_filename) end
     end
     if key == 'l' then
       for line in love.filesystem.lines(save_filename) do
