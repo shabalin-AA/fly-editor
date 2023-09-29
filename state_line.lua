@@ -4,9 +4,9 @@ state_line = UI:Rect(0,0,0,0, palette.bone)
 
 function state_line:load()
   self.chosen_obj = nil
-  self.a_input = UI:TextInput(UI:Rect(0,0,0,0, palette.bone, palette.grey), palette.grey)
-  self.b_input = UI:TextInput(UI:Rect(0,0,0,0, palette.bone, palette.grey), palette.grey)
-  self.c_input = UI:TextInput(UI:Rect(0,0,0,0, palette.bone, palette.grey), palette.grey)
+  self.a_input = UI:TextInput(UI:Rect(0,0,0,0, palette.bone, palette.lightbrown), palette.grey)
+  self.b_input = UI:TextInput(UI:Rect(0,0,0,0, palette.bone, palette.lightbrown), palette.grey)
+  self.c_input = UI:TextInput(UI:Rect(0,0,0,0, palette.bone, palette.lightbrown), palette.grey)
 end
 
 function state_line:update()
@@ -14,6 +14,10 @@ function state_line:update()
   self.y = love.graphics.getHeight() - font_h
   self.width = love.graphics.getWidth()
   self.height = font_h
+  self.a_input.x, self.a_input.y = 50, self.y + 3
+  self.a_input.width, self.a_input.height = 80, self.height - 6
+  self.b_input.x, self.b_input.y = 170, self.y + 3
+  self.b_input.width, self.b_input.height = 80, self.height - 6
 end
 
 function state_line:draw()
@@ -35,9 +39,26 @@ function state_line:draw()
     end
     local gcd_ABC = gcd(A, gcd(B, C))
     A, B, C = A/gcd_ABC, B/gcd_ABC, C/gcd_ABC
-    love.graphics.print(
-      string.format('%s: %dx + %dy + %d = 0', self.chosen_obj.type, A, B, C),
-      0 + 4, self.y + 4
-    )
+    love.graphics.print('Line: ', self.x + 4, self.y + 4)
+    if not self.a_input.active then
+    	self.a_input:set_text(tostring(A))
+    end
+  	self.a_input:draw()
+  	love.graphics.print('x + ', self.a_input.x + self.a_input.width + 2, self.y + 4)
+  	if not self.b_input.active then 
+  		self.b_input:set_text(tostring(B))
+  	end
+  	self.b_input:draw()
+  	love.graphics.print('y + ', self.b_input.x + self.b_input.width + 2, self.y + 4)
   end
+end
+
+function state_line:mousereleased(x, y, button)
+	self.a_input:mousereleased(x, y, button)
+	self.b_input:mousereleased(x, y, button)
+end
+
+function state_line:keypressed(key)
+	self.a_input:keypressed(key)
+	self.b_input:keypressed(key)
 end

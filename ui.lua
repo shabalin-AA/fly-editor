@@ -129,20 +129,24 @@ function UI:TextInput(rect, text_color)
   this.cursor = 0
   this.text_color = text_color
   this.active = false
+  this.active_color = palette.blue
+  this.common_color = rect.linecolor
 
   this.draw_rect = this.draw
 
   function this:draw()
+  	local align = 'right'
     if self.active then 
-      self.linecolor = palette.blue
+      self.linecolor = self.active_color
       love.graphics.setLineWidth(3)
+      align = 'left'
     else 
-      self.linecolor = palette.grey 
+      self.linecolor = self.common_color 
       love.graphics.setLineWidth(2)
     end
     self:draw_rect()
     love.graphics.setColor(self.text_color.r, self.text_color.g, self.text_color.b)
-    love.graphics.printf(table.concat(self.text), self.x+4, self.y+4, self.width, 'left')
+    love.graphics.printf(table.concat(self.text), self.x+2, self.y+2, self.width-4, align)
     -- cursor
     if self.active then
       love.graphics.setLineWidth(1)
@@ -159,6 +163,7 @@ function UI:TextInput(rect, text_color)
       x < self.x + self.width and
       y > self.y and
       y < self.y + self.height
+    self.cursor = #self.text
   end
 
   function this:keypressed(key)
@@ -167,10 +172,19 @@ function UI:TextInput(rect, text_color)
       table.remove(self.text, self.cursor)
       self.cursor = self.cursor - 1
       if self.cursor < 0 then self.cursor = 0 end
+    elseif key == 'return' then
+    	self.active = false
     else
       self.cursor = self.cursor + 1
       table.insert(self.text, self.cursor, key)
     end
+  end
+
+  function this:set_text(str)
+  	self.text = {}
+  	for i=1, string.len(str) do
+  		table.insert(self.text, string.sub(str, i, i))
+  	end
   end
   
   return this

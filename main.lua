@@ -68,6 +68,7 @@ end
 
 function love.mousepressed(x, y, button)
   if button > 1 then return end
+  if y > state_line.y then return end
   local temp_obj = nil
   if mode_list.active_element.text == 'Edit' then 
     return
@@ -116,10 +117,12 @@ function love.mousereleased(x, y, button)
   mode_list:mousereleased(x, y, button)
   color_list:mousereleased(x, y, button)
   current_color = palette[color_list.active_element.text]
+  state_line:mousereleased(x, y, button)
 end
 
 
 function love.keypressed(key)
+	state_line:keypressed(key)
   if love.keyboard.isDown('lctrl') then
     if key == 'z' then table.remove(obj_stack) end
     local save_filename = 'save'
