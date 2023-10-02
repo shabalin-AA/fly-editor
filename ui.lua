@@ -151,7 +151,7 @@ function UI:TextInput(rect, text_color)
     if self.active then
       love.graphics.setLineWidth(1)
       love.graphics.setColor(0,0,0)
-      local cursor_pos_x = self.x+5 + love.graphics.getFont():getWidth(string.sub(table.concat(self.text), 1, cursor_pos))
+      local cursor_pos_x = self.x+2 + love.graphics.getFont():getWidth(string.sub(table.concat(self.text), 1, self.cursor_pos))
       love.graphics.line(cursor_pos_x, self.y+3, cursor_pos_x, self.y-3 + self.height)
       love.graphics.setLineWidth(2)
     end
@@ -182,9 +182,10 @@ function UI:TextInput(rect, text_color)
     elseif key == 'left'  then self.cursor_pos = self.cursor_pos - 1
     else
       self.cursor_pos = self.cursor_pos + 1
-      table.insert(self.text, key)
+      table.insert(self.text, self.cursor_pos, key)
     end
-    if self.cursor_pos < 0 then self.cursor_pos = 0 end
+    if self.cursor_pos < 0 then self.cursor_pos = 0 
+    elseif self.cursor_pos > #self.text then self.cursor_pos = #self.text end
   end
 
   function this:set_text(str)

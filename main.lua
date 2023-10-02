@@ -28,7 +28,6 @@ function love.load()
     color_list:add_element(UI:Label(UI:Rect(), 'blue'))
     color_list:add_element(UI:Label(UI:Rect(), 'lightbrown'))
   state_line:load()
-  just_ti = UI:TextInput(UI:Rect(100, 100, 100, 20, palette.bone, palette.red), palette.grey)
 end
 
 
@@ -64,7 +63,6 @@ function love.draw()
   mode_list:draw()
   color_list:draw()
   state_line:draw()
-  just_ti:draw()
 end
 
 
@@ -120,13 +118,11 @@ function love.mousereleased(x, y, button)
   color_list:mousereleased(x, y, button)
   current_color = palette[color_list.active_element.text]
   state_line:mousereleased(x, y, button)
-  just_ti:mousereleased(x,y,button)
 end
 
 
 function love.keypressed(key)
 	state_line:keypressed(key)
-	just_ti:keypressed(key)
 	if state_line.active then return end
   if love.keyboard.isDown('lctrl') then
     if key == 'z' then table.remove(obj_stack) end
