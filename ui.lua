@@ -126,7 +126,7 @@ end
 function UI:TextInput(rect, text_color) 
   local this = rect
   this.text = {}
-  this.cursor = 0
+  this.cursor_pos = 0
   this.text_color = text_color
   this.active = false
   this.active_color = palette.blue
@@ -151,8 +151,8 @@ function UI:TextInput(rect, text_color)
     if self.active then
       love.graphics.setLineWidth(1)
       love.graphics.setColor(0,0,0)
-      local cursor_x = self.x+5 + love.graphics.getFont():getWidth(string.sub(table.concat(self.text), 1, cursor))
-      love.graphics.line(cursor_x, self.y+3, cursor_x, self.y-3 + self.height)
+      local cursor_pos_x = self.x+5 + love.graphics.getFont():getWidth(string.sub(table.concat(self.text), 1, cursor_pos))
+      love.graphics.line(cursor_pos_x, self.y+3, cursor_pos_x, self.y-3 + self.height)
       love.graphics.setLineWidth(2)
     end
   end
@@ -163,21 +163,28 @@ function UI:TextInput(rect, text_color)
       x < self.x + self.width and
       y > self.y and
       y < self.y + self.height
-    self.cursor = #self.text
+    self.cursor_pos = #self.text
   end
 
   function this:keypressed(key)
     if not self.active then return end
     if key == 'backspace' then
-      table.remove(self.text, self.cursor)
-      self.cursor = self.cursor - 1
-      if self.cursor < 0 then self.cursor = 0 end
+      table.remove(self.text, self.cursor_pos)
+      self.cursor_pos = self.cursor_pos - 1
     elseif key == 'return' then
     	self.active = false
+    elseif key == 'delete' then
+      self.text = {}
+      self.cursor_pos = 0
+    elseif key == 'up'    then self.cursor_pos = 0
+    elseif key == 'down'  then self.cursor_pos = #self.text
+    elseif key == 'right' then self.cursor_pos = self.cursor_pos + 1
+    elseif key == 'left'  then self.cursor_pos = self.cursor_pos - 1
     else
-      self.cursor = self.cursor + 1
-      table.insert(self.text, self.cursor, key)
+      self.cursor_pos = self.cursor_pos + 1
+      table.insert(self.text, key)
     end
+    if self.cursor_pos < 0 then self.cursor_pos = 0 end
   end
 
   function this:set_text(str)
@@ -185,6 +192,7 @@ function UI:TextInput(rect, text_color)
   	for i=1, string.len(str) do
   		table.insert(self.text, string.sub(str, i, i))
   	end
+  	self.cursor_pos = #self.text
   end
   
   return this

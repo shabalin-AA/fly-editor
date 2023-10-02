@@ -1,5 +1,10 @@
 require 'ui'
 
+local function gcd(a, b)
+  if a == 0 then return b end
+  return gcd(math.fmod(b, a), a)
+end
+
 state_line = UI:Rect(0,0,0,0, palette.bone)
 
 function state_line:load()
@@ -7,6 +12,7 @@ function state_line:load()
   self.a_input = UI:TextInput(UI:Rect(0,0,0,0, palette.bone, palette.lightbrown), palette.grey)
   self.b_input = UI:TextInput(UI:Rect(0,0,0,0, palette.bone, palette.lightbrown), palette.grey)
   self.c_input = UI:TextInput(UI:Rect(0,0,0,0, palette.bone, palette.lightbrown), palette.grey)
+  self.active = false
 end
 
 function state_line:update()
@@ -18,6 +24,9 @@ function state_line:update()
   self.a_input.width, self.a_input.height = 80, self.height - 6
   self.b_input.x, self.b_input.y = 170, self.y + 3
   self.b_input.width, self.b_input.height = 80, self.height - 6
+  self.c_input.x, self.c_input.y = 290, self.y + 3
+  self.c_input.width, self.c_input.height = 80, self.height - 6
+  self.active = self.a_input.active or self.b_input.active or self.c_input.active
 end
 
 function state_line:draw()
@@ -29,36 +38,41 @@ function state_line:draw()
     0, self.y+4, self.width-4, 'right'
   )
   if not self.chosen_obj then return end
-  if self.chosen_obj.type == 'Line' then 
-    local A = self.chosen_obj.p[2].y - self.chosen_obj.p[1].y
-    local B = -self.chosen_obj.p[2].x + self.chosen_obj.p[1].x
-    local C = self.chosen_obj.p[1].y * B - self.chosen_obj.p[1].x * A
-    local function gcd(a, b)
-      if a == 0 then return b end
-      return gcd(math.fmod(b, a), a)
-    end
-    local gcd_ABC = gcd(A, gcd(B, C))
-    A, B, C = A/gcd_ABC, B/gcd_ABC, C/gcd_ABC
-    love.graphics.print('Line: ', self.x + 4, self.y + 4)
-    if not self.a_input.active then
-    	self.a_input:set_text(tostring(A))
-    end
-  	self.a_input:draw()
-  	love.graphics.print('x + ', self.a_input.x + self.a_input.width + 2, self.y + 4)
-  	if not self.b_input.active then 
-  		self.b_input:set_text(tostring(B))
-  	end
-  	self.b_input:draw()
-  	love.graphics.print('y + ', self.b_input.x + self.b_input.width + 2, self.y + 4)
-  end
+  if not self.chosen_obj.type == 'Line' then return end
+  local x1, y1 = self.chosen_obj.p[1].x, self.chosen_obj.p[1].y
+  if self.a_input.active then
+    self.chosen_obj.p[2].y = (tonumber(table.concat(self.a_input.text)) or 0) + y1
+	elseif self.b_input.active then
+	  self.chosen_obj.p[2].x = -(tonumber(table.concat(self.b_input.text)) or 0) + x1
+	end
+  local x2, y2 = self.chosen_obj.p[2].x, self.chosen_obj.p[2].y
+  local A = y2 - y1
+  local B = -x2 + x1
+  local C = -y1 * B - x1 * A
+  -- if not self.active then 
+  --   local gcd_ABC = gcd(A, gcd(B, C))
+  --   A, B, C = A/gcd_ABC, B/gcd_ABC, C/gcd_ABC
+  -- end
+  love.graphics.print('Line: ', self.x + 4, self.y + 4)
+	self.a_input:set_text(tostring(A))
+	self.a_input:draw()
+	love.graphics.print('x + ', self.a_input.x + self.a_input.width + 2, self.y + 4)
+  self.b_input:set_text(tostring(B))
+	self.b_input:draw()
+	love.graphics.print('y + ', self.b_input.x + self.b_input.width + 2, self.y + 4)
+	self.c_input:set_text(tostring(C))
+	self.c_input:draw()
+	love.graphics.print(' = 0', self.c_input.x + self.c_input.width + 2, self.y + 4)
 end
 
 function state_line:mousereleased(x, y, button)
 	self.a_input:mousereleased(x, y, button)
 	self.b_input:mousereleased(x, y, button)
+	self.c_input:mousereleased(x, y, button)
 end
 
 function state_line:keypressed(key)
 	self.a_input:keypressed(key)
 	self.b_input:keypressed(key)
+	self.c_input:keypressed(key)
 end
