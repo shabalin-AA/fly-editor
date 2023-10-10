@@ -124,17 +124,22 @@ end
 function love.keypressed(key)
 	state_line:keypressed(key)
 	if state_line.active then return end
+  local save_filename = 'save'
   if love.keyboard.isDown('lctrl') then
-    if key == 'z' then table.remove(obj_stack) end
-    local save_filename = 'save'
-    if key == 's' then 
+    if key == 'z' then 
+			table.remove(obj_stack)
+		elseif key == 's' then 
       love.filesystem.write(save_filename, '')
       for _,v in ipairs(obj_stack) do serialize(v, save_filename) end
-    end
-    if key == 'l' then
+		elseif key == 'l' then
       for line in love.filesystem.lines(save_filename) do
         table.insert(obj_stack, deserialize(line))
       end
+		elseif key == 'a' then
+			for _,v in ipairs(obj_stack) do
+				for _,p in ipairs(v.p) do p.in_focus = true end
+				v.in_focus = true
+			end
     end
   end
   if key == 'backspace' then
