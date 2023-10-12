@@ -54,21 +54,27 @@ function UI:Label(rect, text, text_color)
 end
 
 
-function UI:List(rect, name)
-  local this = rect
+function UI:List(header_label)
+  local this = UI:Rect()
+	this.x = header_label.x
+	this.y = header_label.y
+	this.width = header_label.width
+	this.height = header_label.height
+	
+	this.header = header_label
   this.elements = {}
+	table.insert(this.elements, header_label)
+	
   this.active_color = palette.blue
   
   function this:add_element(label)
     self.active_element = label
+    label.width = self.header.width
+    label.height = self.header.height
+    label.y = self.header.y + self.header.height * #self.elements
+    label.x = self.header.x
     table.insert(self.elements, label)
-    local element_height = self.height / #self.elements
-    for i,v in ipairs(self.elements) do
-      v.width = self.width
-      v.height = element_height
-      v.y = self.y + (i-1) * element_height
-      v.x = self.x
-    end
+		self.height = self.height + label.height
   end
 
   function this:get_element(name)
@@ -78,9 +84,6 @@ function UI:List(rect, name)
     return nil
   end
 
-  this.label = UI:Label(UI:Rect(), name)
-  this:add_element(this.label)
-  
   function this:mousereleased(x, y, button)
     if not self:focused() then return end
     for i,v in ipairs(self.elements) do

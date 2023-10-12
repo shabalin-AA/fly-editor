@@ -16,13 +16,13 @@ function love.load()
   drawing = false
   prev_mouse_pos = {0, 0}
   current_color = palette.blue
-  mode_list = UI:FoldList(UI:List(UI:Rect(10, 10, 110, 150), 'Mode'))
+  mode_list = UI:FoldList(UI:List(UI:Label(UI:Rect(10, 10, 110, 26), 'Mode')))
     mode_list:add_element(UI:Label(UI:Rect(), 'Focus'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Edit'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Pen'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Line'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Rectangle'))
-  color_list = UI:FoldList(UI:List(UI:Rect(130, 10, 110, 130), 'Color'))
+  color_list = UI:FoldList(UI:List(UI:Label(UI:Rect(130, 10, 110, 26), 'Color')))
     color_list:add_element(UI:Label(UI:Rect(), 'red'))
     color_list:add_element(UI:Label(UI:Rect(), 'green'))
     color_list:add_element(UI:Label(UI:Rect(), 'blue'))
@@ -71,6 +71,7 @@ end
 function love.mousepressed(x, y, button)
   if button > 1 then return end
   if y > state_line.y then return end
+  if y < mode_list.y + mode_list.header.height then return end
   local temp_obj = nil
   if mode_list.active_element.text == 'Edit' then 
     return
