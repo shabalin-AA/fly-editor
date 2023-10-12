@@ -8,11 +8,17 @@ function UI:Rect(x, y, width, height, fillcolor, linecolor)
   this.y = y
   this.width = width
   this.height = height
-  
-  if fillcolor then this.fillcolor = fillcolor
-  else this.fillcolor = palette.grey end
-  if linecolor then this.linecolor = linecolor
-  else this.linecolor = palette.lightbrown end
+	
+	function this:focused()
+		local x,y = love.mouse.getPosition()
+		return x < self.x + self.width and 
+           x > self.x and
+           y < self.y + self.height and 
+           y > self.y
+  end
+
+  this.fillcolor = fillcolor or palette.grey
+  this.linecolor = linecolor or palette.lightbrown
   
   function this:draw_back()
     love.graphics.setColor(self.fillcolor.r, self.fillcolor.g, self.fillcolor.b)
@@ -35,8 +41,7 @@ end
 function UI:Label(rect, text, text_color)
   local this = rect
   this.text = text
-  if text_color then this.text_color = text_color
-  else this.text_color = palette.bone end
+  this.text_color = text_color or palette.bone
   
   function this:draw()
     self:draw_back()
@@ -50,7 +55,7 @@ end
 
 
 function UI:List(rect, name)
-  local this =rect
+  local this = rect
   this.elements = {}
   this.active_color = palette.blue
   
@@ -76,16 +81,8 @@ function UI:List(rect, name)
   this.label = UI:Label(UI:Rect(), name)
   this:add_element(this.label)
   
-  function this:update()
-    --
-  end
-
   function this:mousereleased(x, y, button)
-    local active = x < self.x + self.width and 
-                   x > self.x and
-                   y < self.y + self.height and 
-                   y > self.y
-    if not active then return end
+    if not self:focused() then return end
     for i,v in ipairs(self.elements) do
       v.linecolor = self.linecolor
     end
@@ -120,6 +117,30 @@ function UI:List(rect, name)
   end
   
   return this
+end
+
+
+function UI:FoldList(list)
+	local this = list
+	this.folded = true
+	
+	function this:update()
+    if self.folded and self.elements[1]:focused() then
+			self.folded = false
+		end
+		if not self.folded and not self:focused() then
+			self.folded = true
+		end
+	end
+	
+	this.draw_list = this.draw
+	
+	function this:draw()
+		if self.folded then self.elements[1]:draw()
+		else self:draw_list() end
+	end
+	
+	return this
 end
 
 

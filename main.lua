@@ -16,13 +16,13 @@ function love.load()
   drawing = false
   prev_mouse_pos = {0, 0}
   current_color = palette.blue
-  mode_list = UI:List(UI:Rect(10, 10, 110, 150), 'Mode')
+  mode_list = UI:FoldList(UI:List(UI:Rect(10, 10, 110, 150), 'Mode'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Focus'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Edit'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Pen'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Line'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Rectangle'))
-  color_list = UI:List(UI:Rect(10, 170, 110, 130), 'Color')
+  color_list = UI:FoldList(UI:List(UI:Rect(130, 10, 110, 130), 'Color'))
     color_list:add_element(UI:Label(UI:Rect(), 'red'))
     color_list:add_element(UI:Label(UI:Rect(), 'green'))
     color_list:add_element(UI:Label(UI:Rect(), 'blue'))
@@ -31,7 +31,9 @@ function love.load()
 end
 
 
-function love.update(dt) 
+function love.update(dt)
+	mode_list:update()
+	color_list:update()
   state_line:update()
   if drawing then
     local last_obj = obj_stack[#obj_stack]
