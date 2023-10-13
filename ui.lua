@@ -21,12 +21,12 @@ function UI:Rect(x, y, width, height, fillcolor, linecolor)
   this.linecolor = linecolor or palette.lightbrown
   
   function this:draw_back()
-    love.graphics.setColor(self.fillcolor.r, self.fillcolor.g, self.fillcolor.b)
+    setColor(self.fillcolor)
     love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
   end
 
   function this:draw_border()
-    love.graphics.setColor(self.linecolor.r, self.linecolor.g, self.linecolor.b)
+    setColor(self.linecolor)
     love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
   end
   
@@ -45,7 +45,7 @@ function UI:Label(rect, text, text_color)
   
   function this:draw()
     self:draw_back()
-    love.graphics.setColor(self.text_color.r, self.text_color.g, self.text_color.b)
+    setColor(self.text_color)
     love.graphics.print(self.text, self.x+4, self.y+4)
     self:draw_border()
   end
@@ -83,6 +83,10 @@ function UI:List(header_label)
     end
     return nil
   end
+	
+	function this:new_active()
+		-- init when need
+	end
 
   function this:mousereleased(x, y, button)
     if not self:focused() then return end
@@ -93,6 +97,7 @@ function UI:List(header_label)
       if i > 1 and y < v.y + v.height then 
         self.active_element = v 
         v.linecolor = self.active_color
+				self:new_active()
         break
       end
     end
@@ -115,7 +120,7 @@ function UI:List(header_label)
     self:draw_rect()
     for _,v in ipairs(self.elements) do v:draw() end
     love.graphics.setLineWidth(3)
-    self.active_element:draw()
+    if self.active_element then self.active_element:draw() end
     love.graphics.setLineWidth(2)
   end
   
@@ -169,7 +174,7 @@ function UI:TextInput(rect, text_color)
       love.graphics.setLineWidth(2)
     end
     self:draw_rect()
-    love.graphics.setColor(self.text_color.r, self.text_color.g, self.text_color.b)
+    setColor(self.text_color)
     love.graphics.printf(table.concat(self.text), self.x+2, self.y+2, self.width-4, align)
     -- cursor
     if self.active then

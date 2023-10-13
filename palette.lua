@@ -7,3 +7,7 @@ palette = {
   bone = {r=250/256, g=241/256, b=228/256},
   lightbrown = {r=116/256, g=103/256, b=103/256}
 }
+
+function setColor(palette_color)
+	love.graphics.setColor(palette_color.r, palette_color.g, palette_color.b)
+end

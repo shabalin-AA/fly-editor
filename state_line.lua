@@ -32,7 +32,7 @@ end
 function state_line:draw()
   self:draw_back()
   self:draw_border()
-  love.graphics.setColor(palette.grey.r, palette.grey.g, palette.grey.b)
+  setColor(palette.grey)
   love.graphics.printf(
     string.format('%d; %d', love.mouse.getX(), love.mouse.getY()), 
     0, self.y+4, self.width-4, 'right'

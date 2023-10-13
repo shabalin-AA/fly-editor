@@ -6,6 +6,15 @@ require 'palette'
 require 'points'
 require 'serialize'
 require 'state_line'
+require 'grouping'
+
+
+function focus_all(arr)
+	for _,v in ipairs(arr) do
+		for _,p in ipairs(v.p) do p.in_focus = true end
+		v.in_focus = true
+	end
+end
 
 
 function love.load()
@@ -28,12 +37,23 @@ function love.load()
     color_list:add_element(UI:Label(UI:Rect(), 'blue'))
     color_list:add_element(UI:Label(UI:Rect(), 'lightbrown'))
   state_line:load()
+	groups = {}
+	group_list = UI:FoldList(UI:List(UI:Label(UI:Rect(love.graphics.getWidth() - 120, 10, 110, 26), 'Groups')))
+	function group_list:new_active(groups)
+		for i,v in ipairs(group_list.elements) do
+			if v == group_list.active_element then
+				focus_all(groups[i].elements)
+				break
+			end
+		end
+	end
 end
 
 
 function love.update(dt)
 	mode_list:update()
 	color_list:update()
+	group_list:update()
   state_line:update()
   if drawing then
     local last_obj = obj_stack[#obj_stack]
@@ -64,7 +84,12 @@ function love.draw()
   for _,v in ipairs(obj_stack) do v:draw() end
   mode_list:draw()
   color_list:draw()
+	group_list:draw()
   state_line:draw()
+	-- setColor(palette.bone)
+	-- for i,v in ipairs(groups) do
+	-- 	love.graphics.print(v.name, 300, i * 26)
+	-- end
 end
 
 
@@ -120,6 +145,7 @@ function love.mousereleased(x, y, button)
   mode_list:mousereleased(x, y, button)
   color_list:mousereleased(x, y, button)
   current_color = palette[color_list.active_element.text]
+	group_list:mousereleased(x, y, button)
   state_line:mousereleased(x, y, button)
 end
 
@@ -139,10 +165,14 @@ function love.keypressed(key)
         table.insert(obj_stack, deserialize(line))
       end
 		elseif key == 'a' then
+			focus_all(obj_stack)
+		elseif key == 'g' then
+			local group = {}
 			for _,v in ipairs(obj_stack) do
-				for _,p in ipairs(v.p) do p.in_focus = true end
-				v.in_focus = true
+				if v.in_focus then table.insert(group, v) end
 			end
+			table.insert(groups, Group(group, tostring(#groups)))
+			group_list:add_element(UI:Label(UI:Rect(), tostring(#groups)))
     end
   end
   if key == 'backspace' then
