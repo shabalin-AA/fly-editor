@@ -7,12 +7,20 @@ require 'points'
 require 'serialize'
 require 'state_line'
 require 'grouping'
+require 'popup_windows'
 
 
 function focus_all(arr)
 	for _,v in ipairs(arr) do
 		for _,p in ipairs(v.p) do p.in_focus = true end
 		v.in_focus = true
+	end
+end
+
+function unfocus_all(arr)
+	for _,v in ipairs(arr) do
+		for _,p in ipairs(v.p) do p.in_focus = false end
+		v.in_focus = false
 	end
 end
 
@@ -36,23 +44,19 @@ function love.load()
     color_list:add_element(UI:Label(UI:Rect(), 'green'))
     color_list:add_element(UI:Label(UI:Rect(), 'blue'))
     color_list:add_element(UI:Label(UI:Rect(), 'lightbrown'))
+  transform_button  = UI:Button(UI:Label(UI:Rect(250, 10, 110, 26), 'Transform'))
+  scale_button 			= UI:Button(UI:Label(UI:Rect(370, 10, 110, 26), 'Scale'))
+  mirror_button 		= UI:Button(UI:Label(UI:Rect(490, 10, 110, 26), 'Mirror'))
+  rotate_button 		= UI:Button(UI:Label(UI:Rect(610, 10, 110, 26), 'Rotate'))
   state_line:load()
 	groups = {}
 	group_list = UI:FoldList(UI:List(UI:Label(UI:Rect(love.graphics.getWidth() - 120, 10, 110, 26), 'Groups')))
-	function group_list:new_active(groups)
-		for i,v in ipairs(group_list.elements) do
-			if v == group_list.active_element then
-				focus_all(groups[i].elements)
-				break
-			end
-		end
-	end
 end
 
 
 function love.update(dt)
-	mode_list:update()
-	color_list:update()
+  mode_list:update()
+  color_list:update()
 	group_list:update()
   state_line:update()
   if drawing then
@@ -76,6 +80,9 @@ function love.update(dt)
       end
     end
   end
+	for _,v in ipairs(popup_windows) do
+		v:update()
+	end
   prev_mouse_pos = {love.mouse.getX(), love.mouse.getY()}
 end
 
@@ -84,23 +91,50 @@ function love.draw()
   for _,v in ipairs(obj_stack) do v:draw() end
   mode_list:draw()
   color_list:draw()
+
+	transform_button:draw()
+	scale_button:draw()
+	mirror_button:draw()
+	rotate_button:draw()
+	
 	group_list:draw()
   state_line:draw()
-	-- setColor(palette.bone)
-	-- for i,v in ipairs(groups) do
-	-- 	love.graphics.print(v.name, 300, i * 26)
-	-- end
+	for _,v in pairs(popup_windows) do
+		v:draw()
+	end
 end
 
+
+local function activate_win_event(args)
+	for _,v in pairs(args.windows) do
+		v.active = false
+	end
+	args.win.active = true
+end
 
 function love.mousepressed(x, y, button)
   if button > 1 then return end
   if y > state_line.y then return end
+	transform_button:mousepressed(x, y, button, activate_win_event,
+		{windows = popup_windows, win = popup_windows.Transform}
+	)
+	scale_button:mousepressed(x, y, button, activate_win_event,
+		{windows = popup_windows, win = popup_windows.Scale}
+	)
+	mirror_button:mousepressed(x, y, button, activate_win_event,
+		{windows = popup_windows, win = popup_windows.Mirror}
+	)
+	rotate_button:mousepressed(x, y, button, activate_win_event,
+		{windows = popup_windows, win = popup_windows.Rotate}
+	)
   if y < mode_list.y + mode_list.header.height then return end
+	for _,v in pairs(popup_windows) do
+		v:mousepressed(x, y, button)
+	end
   local temp_obj = nil
-  if mode_list.active_element.text == 'Edit' then 
-    return
-  elseif mode_list.active_element.text == 'Line' then 
+  if mode_list.active_element.text == 'Edit' then return end
+	unfocus_all(obj_stack)
+	if mode_list.active_element.text == 'Line' then 
     temp_obj = Line(Point(x,y), Point(x,y))
   elseif mode_list.active_element.text == 'Rectangle' then 
     temp_obj = Rectangle(Point(x,y), Point(x,y))
@@ -124,6 +158,10 @@ end
 
 function love.mousereleased(x, y, button)
   if button > 1 then return end
+	transform_button:mousereleased(x, y, button)
+	scale_button:mousereleased(x, y, button)
+	mirror_button:mousereleased(x, y, button)
+	rotate_button:mousereleased(x, y, button)
   drawing = false
   if mode_list.active_element.text == 'Focus' then
     local focus_rect = obj_stack[#obj_stack]
@@ -145,14 +183,25 @@ function love.mousereleased(x, y, button)
   mode_list:mousereleased(x, y, button)
   color_list:mousereleased(x, y, button)
   current_color = palette[color_list.active_element.text]
-	group_list:mousereleased(x, y, button)
+	local _, i = group_list:mousereleased(x, y, button)
+	if i then 
+		unfocus_all(obj_stack)
+		focus_all(groups[i-1].elements) 
+		mode_list:set_active('Edit')
+	end
   state_line:mousereleased(x, y, button)
+	for _,v in ipairs(popup_windows) do
+		v:mousereleased(x, y, button)
+	end
 end
 
 
 function love.keypressed(key)
 	state_line:keypressed(key)
 	if state_line.active then return end
+	for _,v in ipairs(popup_windows) do
+		v:keypressed(key)
+	end
   local save_filename = 'save'
   if love.keyboard.isDown('lctrl') then
     if key == 'z' then 

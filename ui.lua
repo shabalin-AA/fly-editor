@@ -46,7 +46,7 @@ function UI:Label(rect, text, text_color)
   function this:draw()
     self:draw_back()
     setColor(self.text_color)
-    love.graphics.print(self.text, self.x+4, self.y+4)
+    love.graphics.printf(self.text, self.x, self.y+2, self.width, 'center')
     self:draw_border()
   end
   
@@ -84,10 +84,6 @@ function UI:List(header_label)
     return nil
   end
 	
-	function this:new_active()
-		-- init when need
-	end
-
   function this:mousereleased(x, y, button)
     if not self:focused() then return end
     for i,v in ipairs(self.elements) do
@@ -97,8 +93,7 @@ function UI:List(header_label)
       if i > 1 and y < v.y + v.height then 
         self.active_element = v 
         v.linecolor = self.active_color
-				self:new_active()
-        break
+				return v, i
       end
     end
   end
@@ -227,3 +222,109 @@ function UI:TextInput(rect, text_color)
   
   return this
 end
+
+
+function UI:Button(label, active_color)
+	local this = label
+	
+	this.active_color = active_color or palette.blue
+	this.common_color = label.linecolor
+	this.active = false
+	
+	function this:mousepressed(x, y, button, event, event_args)
+		if not self:focused() then return end
+		if event then event(event_args) end
+		self.active = true
+	end
+	
+	function this:mousereleased(x, y, button, event, event_args)
+		if event then event(event_args) end
+		self.active = false
+	end
+	
+	this.draw_label = this.draw
+	
+	function this:draw()
+		if self.active then 
+			love.graphics.setLineWidth(3)
+			self.linecolor = self.active_color
+		else
+			love.graphics.setLineWidth(2)
+			self.linecolor = self.common_color
+		end
+		self:draw_label()
+	end
+	
+	return this
+end
+
+
+function UI:Window(rect, title)
+	local this = {}
+	
+	this.title = title or 'window'
+	this.active = false
+	
+	local close_button = UI:Button(
+		UI:Label(
+			UI:Rect(
+				rect.x+rect.width-26, rect.y+2, 
+				24, 24, 
+				{r=1, g=0, b=0}, 
+				{r=1, g=0, b=0}
+			), 
+			'X', 
+			palette.bone
+		)
+	)
+	close_button.active_color = {r=1, g=0, b=0}
+	this.elements = {rect, close_button}
+	
+	function this:add_element(el)
+		el.x = el.x + self.elements[1].x
+		el.y = el.y + self.elements[1].y
+		el.width = el.width + self.elements[1].width
+		el.height = el.height + self.elements[1].height
+		table.insert(self.elements, el)
+	end
+	
+	function this:update()
+		if not self.active then return end
+		for _,v in ipairs(self.elements) do
+			v:update()
+		end
+	end
+	
+	function this:draw()
+		if not self.active then return end
+		for _,v in ipairs(self.elements) do
+			v:draw()
+		end
+		setColor(palette.bone)
+		love.graphics.printf(self.title, self.elements[1].x, self.elements[1].y+4, self.elements[1].width, 'center')
+	end
+	
+	function this:mousepressed(x, y, button)
+		self.elements[2]:mousepressed(x, y, button, 
+			function(args) args.win.active = false end, 
+			{win = self}
+		)
+	end
+	
+	function this:mousereleased(x, y, button)
+		if not self.active then return end
+		for _,v in ipairs(self.elements) do
+			v:mousereleased(x, y, button)
+		end
+	end
+	
+	function this:keypressed(key)
+		if not self.active then return end
+		for _,v in ipairs(self.elements) do
+			v:keypressed(key)
+		end
+	end
+	
+	return this
+end
+
