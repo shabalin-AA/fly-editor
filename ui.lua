@@ -34,6 +34,11 @@ function UI:Rect(x, y, width, height, fillcolor, linecolor)
     self:draw_back()
     self:draw_border()
   end
+	
+	function this:update() end
+	function this:mousepressed(x, y, button) end
+	function this:mousereleased(x, y, button) end
+	function this:keypressed(key) end
   
   return this
 end
@@ -85,7 +90,7 @@ function UI:List(header_label)
   end
 	
   function this:mousereleased(x, y, button)
-    if not self:focused() then return end
+    if not self:focused() then return false end
     for i,v in ipairs(self.elements) do
       v.linecolor = self.linecolor
     end
@@ -96,6 +101,7 @@ function UI:List(header_label)
 				return v, i
       end
     end
+		return true
   end
 
   function this:set_active(name)
@@ -182,16 +188,14 @@ function UI:TextInput(rect, text_color)
   end
 
   function this:mousereleased(x, y, button)
-    self.active = 
-      x > self.x and
-      x < self.x + self.width and
-      y > self.y and
-      y < self.y + self.height
+    self.active = self:focused()
+		if not self:focused() then return false end
     self.cursor_pos = #self.text
+		return true
   end
 
   function this:keypressed(key)
-    if not self.active then return end
+    if not self.active then return false end
     if key == 'backspace' then
       table.remove(self.text, self.cursor_pos)
       self.cursor_pos = self.cursor_pos - 1
@@ -204,12 +208,13 @@ function UI:TextInput(rect, text_color)
     elseif key == 'down'  then self.cursor_pos = #self.text
     elseif key == 'right' then self.cursor_pos = self.cursor_pos + 1
     elseif key == 'left'  then self.cursor_pos = self.cursor_pos - 1
-    else
+		elseif string.len(key) == 1 then
       self.cursor_pos = self.cursor_pos + 1
       table.insert(self.text, self.cursor_pos, key)
     end
     if self.cursor_pos < 0 then self.cursor_pos = 0 
     elseif self.cursor_pos > #self.text then self.cursor_pos = #self.text end
+		return true
   end
 
   function this:set_text(str)
@@ -232,14 +237,17 @@ function UI:Button(label, active_color)
 	this.active = false
 	
 	function this:mousepressed(x, y, button, event, event_args)
-		if not self:focused() then return end
+		if not self:focused() then return false end
 		if event then event(event_args) end
 		self.active = true
+		return true
 	end
 	
 	function this:mousereleased(x, y, button, event, event_args)
+		if not self:focused() then return false end
 		if event then event(event_args) end
 		self.active = false
+		return true
 	end
 	
 	this.draw_label = this.draw
@@ -283,9 +291,8 @@ function UI:Window(rect, title)
 	function this:add_element(el)
 		el.x = el.x + self.elements[1].x
 		el.y = el.y + self.elements[1].y
-		el.width = el.width + self.elements[1].width
-		el.height = el.height + self.elements[1].height
 		table.insert(self.elements, el)
+		return #self.elements
 	end
 	
 	function this:update()
@@ -304,25 +311,34 @@ function UI:Window(rect, title)
 		love.graphics.printf(self.title, self.elements[1].x, self.elements[1].y+4, self.elements[1].width, 'center')
 	end
 	
-	function this:mousepressed(x, y, button)
-		self.elements[2]:mousepressed(x, y, button, 
-			function(args) args.win.active = false end, 
+	function this:mousepressed(x, y, button, onclose_event, onclose_event_args)
+		if not self.active then return false end
+		if self.elements[2]:mousepressed(x, y, button, 
+			function(args) 
+				args.win.active = false 
+			end, 
 			{win = self}
-		)
+		) then onclose_event(onclose_event_args) end
+		for _,v in ipairs(self.elements) do
+			v:mousepressed(x, y, button)
+		end
+		return true
 	end
 	
 	function this:mousereleased(x, y, button)
-		if not self.active then return end
+		if not self.active then return false end
 		for _,v in ipairs(self.elements) do
 			v:mousereleased(x, y, button)
 		end
+		return true
 	end
 	
 	function this:keypressed(key)
-		if not self.active then return end
+		if not self.active then return false end
 		for _,v in ipairs(self.elements) do
 			v:keypressed(key)
 		end
+		return true
 	end
 	
 	return this

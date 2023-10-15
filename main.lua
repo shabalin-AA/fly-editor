@@ -80,9 +80,9 @@ function love.update(dt)
       end
     end
   end
-	for _,v in ipairs(popup_windows) do
-		v:update()
-	end
+	transform_window:update()
+	transform_window.m = tonumber(table.concat(transform_window.m_in.text)) or 0
+	transform_window.n = tonumber(table.concat(transform_window.n_in.text)) or 0
   prev_mouse_pos = {love.mouse.getX(), love.mouse.getY()}
 end
 
@@ -99,16 +99,15 @@ function love.draw()
 	
 	group_list:draw()
   state_line:draw()
-	for _,v in pairs(popup_windows) do
-		v:draw()
-	end
+	transform_window:draw()
 end
 
 
 local function activate_win_event(args)
-	for _,v in pairs(args.windows) do
-		v.active = false
-	end
+	transform_window.active = false
+	scale_window.active = false
+	mirror_window.active = false
+	rotate_window.active = false
 	args.win.active = true
 end
 
@@ -116,21 +115,31 @@ function love.mousepressed(x, y, button)
   if button > 1 then return end
   if y > state_line.y then return end
 	transform_button:mousepressed(x, y, button, activate_win_event,
-		{windows = popup_windows, win = popup_windows.Transform}
+		{win = transform_window}
 	)
 	scale_button:mousepressed(x, y, button, activate_win_event,
-		{windows = popup_windows, win = popup_windows.Scale}
+		{}
 	)
 	mirror_button:mousepressed(x, y, button, activate_win_event,
-		{windows = popup_windows, win = popup_windows.Mirror}
+		{}
 	)
 	rotate_button:mousepressed(x, y, button, activate_win_event,
-		{windows = popup_windows, win = popup_windows.Rotate}
+		{}
 	)
   if y < mode_list.y + mode_list.header.height then return end
-	for _,v in pairs(popup_windows) do
-		v:mousepressed(x, y, button)
-	end
+	transform_window:mousepressed(x, y, button,
+		function(args)
+			for _,v in ipairs(args.objects) do
+				if v.in_focus then
+					for _,p in ipairs(v.p) do
+						p.x = p.x + args.win.m
+						p.y = p.y + args.win.n
+					end
+				end
+			end
+		end,
+		{objects = obj_stack, win = transform_window}
+	)
   local temp_obj = nil
   if mode_list.active_element.text == 'Edit' then return end
 	unfocus_all(obj_stack)
@@ -190,18 +199,13 @@ function love.mousereleased(x, y, button)
 		mode_list:set_active('Edit')
 	end
   state_line:mousereleased(x, y, button)
-	for _,v in ipairs(popup_windows) do
-		v:mousereleased(x, y, button)
-	end
+	transform_window:mousereleased(x, y, button)
 end
 
 
 function love.keypressed(key)
-	state_line:keypressed(key)
-	if state_line.active then return end
-	for _,v in ipairs(popup_windows) do
-		v:keypressed(key)
-	end
+	if state_line:keypressed(key) then return end
+	if transform_window:keypressed(key) then return end
   local save_filename = 'save'
   if love.keyboard.isDown('lctrl') then
     if key == 'z' then 
@@ -230,5 +234,8 @@ function love.keypressed(key)
       if not v.in_focus then table.insert(new_stack, v) end
     end
     obj_stack = new_stack
+	elseif key == 'escape' then
+		unfocus_all(obj_stack)
+		mode_list:set_active('Focus')
   end
 end 
