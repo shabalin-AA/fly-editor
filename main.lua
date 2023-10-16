@@ -46,8 +46,7 @@ end
 local function load_op_buttons()
   transform_button = UI:Button(UI:Label(UI:Rect(250, 10, 110, 26), 'Transform'))
   scale_button = UI:Button(UI:Label(UI:Rect(370, 10, 110, 26), 'Scale'))
-  mirror_button = UI:Button(UI:Label(UI:Rect(490, 10, 110, 26), 'Mirror'))
-  rotate_button = UI:Button(UI:Label(UI:Rect(610, 10, 110, 26), 'Rotate'))
+  rotate_button = UI:Button(UI:Label(UI:Rect(490, 10, 110, 26), 'Rotate'))
 end
 
 
@@ -102,8 +101,12 @@ local function update_windows()
 	scale_window:update()
 	scale_window.a = tonumber(table.concat(scale_window.a_in.text)) or 0
 	scale_window.b = tonumber(table.concat(scale_window.b_in.text)) or 0
+	scale_window.m = tonumber(table.concat(scale_window.m_in.text)) or 0
+	scale_window.n = tonumber(table.concat(scale_window.n_in.text)) or 0
 	rotate_window:update()
 	rotate_window.alpha = tonumber(table.concat(rotate_window.alpha_in.text)) or 0
+	rotate_window.m = tonumber(table.concat(rotate_window.m_in.text)) or 0
+	rotate_window.n = tonumber(table.concat(rotate_window.n_in.text)) or 0
 end
 
 function love.update(dt)
@@ -125,7 +128,6 @@ function love.draw()
 
 	transform_button:draw()
 	scale_button:draw()
-	mirror_button:draw()
 	rotate_button:draw()
 	
 	group_list:draw()
@@ -140,28 +142,24 @@ end
 local function activate_win_event(args)
 	transform_window.active = false
 	scale_window.active = false
-	mirror_window.active = false
 	rotate_window.active = false
 	args.win.active = true
 end
 
 local function mpressed_buttons(x, y, button)
-	transform_button:mousepressed(x, y, button, activate_win_event,
+	if transform_button:mousepressed(x, y, button, activate_win_event,
 		{win = transform_window}
-	)
-	scale_button:mousepressed(x, y, button, activate_win_event,
+	) then return true end
+	if scale_button:mousepressed(x, y, button, activate_win_event,
 		{win = scale_window}
-	)
-	mirror_button:mousepressed(x, y, button, activate_win_event,
-		{win = mirror_window}
-	)
-	rotate_button:mousepressed(x, y, button, activate_win_event,
+	) then return true end
+	if rotate_button:mousepressed(x, y, button, activate_win_event,
 		{win = rotate_window}
-	)
+	) then return true end
 end
 
 local function mpressed_windows(x, y, button)
-	transform_window:mousepressed(x, y, button,
+	if transform_window:mousepressed(x, y, button,
 		function(args)
 			for _,v in ipairs(args.objects) do
 				if v.in_focus then
@@ -171,23 +169,29 @@ local function mpressed_windows(x, y, button)
 					end
 				end
 			end
+			args.win.m_in.text = {}
+			args.win.n_in.text = {}
 		end,
 		{objects = obj_stack, win = transform_window}
-	)
-	scale_window:mousepressed(x, y, button,
+	) then return true end
+	if scale_window:mousepressed(x, y, button,
 		function(args)
 			for _,v in ipairs(args.objects) do
 				if v.in_focus then
 					for _,p in ipairs(v.p) do
-						p.x = p.x * args.win.a
-						p.y = p.y * args.win.b
+						p.x = (p.x - args.win.m) * args.win.a + args.win.m
+						p.y = (p.y - args.win.n) * args.win.b + args.win.n
 					end
 				end
 			end
+			args.win.a_in.text = {}
+			args.win.b_in.text = {}
+			args.win.m_in.text = {}
+			args.win.n_in.text = {}
 		end,
 		{objects = obj_stack, win = scale_window}
-	)
-	rotate_window:mousepressed(x, y, button,
+	) then return true end
+	if rotate_window:mousepressed(x, y, button,
 		function(args)
 			local angle = args.win.alpha * 180 / math.pi
 			local sina = math.sin(angle)
@@ -203,18 +207,21 @@ local function mpressed_windows(x, y, button)
 				if v.in_focus then
 					for _,p in ipairs(v.p) do
 						table.insert(focused, p)
-						table.insert(points_matrix, {p.x, p.y, 1})
+						table.insert(points_matrix, {p.x - args.win.m, p.y - args.win.n, 1})
 					end
 				end
 			end
 			local dot = matrix_dot(points_matrix, rotate_matrix)
 			for i=1, #dot do
-				focused[i].x = dot[i][1]
-				focused[i].y = dot[i][2]
+				focused[i].x = dot[i][1] + args.win.m
+				focused[i].y = dot[i][2] + args.win.n
 			end
+			args.win.alpha_in.text = {}
+			args.win.m_in.text = {}
+			args.win.n_in.text = {}
 		end,
 		{objects = obj_stack, win = rotate_window}
-	)
+	) then return true end
 end
 
 local function handle_drawing(x, y, button)
@@ -245,9 +252,8 @@ end
 function love.mousepressed(x, y, button)
   if button > 1 then return end
   if y > state_line.y then return end
-	mpressed_buttons(x, y, button)
-	mpressed_windows(x, y, button)
-  if y < mode_list.y + mode_list.header.height then return end
+	if mpressed_buttons(x, y, button) then return end
+	if mpressed_windows(x, y, button) then return end
 	handle_drawing(x, y, button)
 end
 
@@ -255,7 +261,6 @@ end
 local function mreleased_buttons(x, y, button)
 	transform_button:mousereleased(x, y, button)
 	scale_button:mousereleased(x, y, button)
-	mirror_button:mousereleased(x, y, button)
 	rotate_button:mousereleased(x, y, button)
 end
 

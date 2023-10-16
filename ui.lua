@@ -313,6 +313,7 @@ function UI:Window(rect, title)
 	
 	function this:mousepressed(x, y, button, onclose_event, onclose_event_args)
 		if not self.active then return false end
+		if not self.elements[1]:focused() then return false end
 		if self.elements[2]:mousepressed(x, y, button, 
 			function(args) 
 				args.win.active = false 
@@ -327,6 +328,7 @@ function UI:Window(rect, title)
 	
 	function this:mousereleased(x, y, button)
 		if not self.active then return false end
+		if not self.elements[1]:focused() then return false end
 		for _,v in ipairs(self.elements) do
 			v:mousereleased(x, y, button)
 		end

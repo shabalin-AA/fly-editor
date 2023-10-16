@@ -45,7 +45,7 @@ transform_window.n = 0
 
 
 scale_window = UI:Window(
-	UI:Rect(win_x, win_y, win_w, win_h, palette.grey, palette.lightbrown), 
+	UI:Rect(win_x, win_y-100, win_w, win_h*2, palette.grey, palette.lightbrown), 
 	'Scale'
 )
 scale_window:add_element(
@@ -81,15 +81,50 @@ scale_window.b_in = scale_window.elements[
 scale_window.a = 0
 scale_window.b = 0
 
-
-mirror_window = UI:Window(
-	UI:Rect(win_x, win_y, win_w, win_h, palette.grey, palette.lightbrown), 
-	'Mirror'
+scale_window:add_element(
+	UI:Label(
+		UI:Rect(20, 150, 210, 24, nil, palette.grey), 
+		'relative to point with coordinates:', 
+		palette.bone
+	)
 )
+scale_window:add_element(
+	UI:Label(
+		UI:Rect(20, 200, 60, 24, nil, palette.grey), 
+		'm = ', 
+		palette.bone
+	)
+)
+scale_window.m_in = scale_window.elements[
+	scale_window:add_element(
+		UI:TextInput(
+			UI:Rect(80, 200, 120, 24, palette.bone, palette.grey), 
+			palette.grey
+		)
+	)
+]
+scale_window:add_element(
+	UI:Label(
+		UI:Rect(20, 250, 60, 24, nil, palette.grey), 
+		'n = ', 
+		palette.bone
+	)
+)
+scale_window.n_in = scale_window.elements[
+	scale_window:add_element(
+		UI:TextInput(
+			UI:Rect(80, 250, 120, 24, palette.bone, palette.grey), 
+			palette.grey
+		)
+	)
+]
+scale_window.m = 0
+scale_window.n = 0
+
 
 
 rotate_window = UI:Window(
-	UI:Rect(win_x, win_y, win_w, win_h-50, palette.grey, palette.lightbrown), 
+	UI:Rect(win_x, win_y-100, win_w, win_h+100, palette.grey, palette.lightbrown), 
 	'Rotate'
 )
 rotate_window:add_element(
@@ -107,3 +142,43 @@ rotate_window.alpha_in = rotate_window.elements[
 		)
 	)
 ]
+
+rotate_window:add_element(
+	UI:Label(
+		UI:Rect(20, 100, 210, 24, nil, palette.grey), 
+		'relative to point with coordinates:', 
+		palette.bone
+	)
+)
+rotate_window:add_element(
+	UI:Label(
+		UI:Rect(20, 150, 60, 24, nil, palette.grey), 
+		'm = ', 
+		palette.bone
+	)
+)
+rotate_window.m_in = rotate_window.elements[
+	rotate_window:add_element(
+		UI:TextInput(
+			UI:Rect(80, 150, 120, 24, palette.bone, palette.grey), 
+			palette.grey
+		)
+	)
+]
+rotate_window:add_element(
+	UI:Label(
+		UI:Rect(20, 200, 60, 24, nil, palette.grey), 
+		'n = ', 
+		palette.bone
+	)
+)
+rotate_window.n_in = rotate_window.elements[
+	rotate_window:add_element(
+		UI:TextInput(
+			UI:Rect(80, 200, 120, 24, palette.bone, palette.grey), 
+			palette.grey
+		)
+	)
+]
+rotate_window.m = 0
+rotate_window.n = 0
