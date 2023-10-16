@@ -8,20 +8,46 @@ require 'serialize'
 require 'state_line'
 require 'grouping'
 require 'popup_windows'
+require 'matrix'
 
 
-function focus_all(arr)
+local function focus_all(arr)
 	for _,v in ipairs(arr) do
 		for _,p in ipairs(v.p) do p.in_focus = true end
 		v.in_focus = true
 	end
 end
 
-function unfocus_all(arr)
+local function unfocus_all(arr)
 	for _,v in ipairs(arr) do
 		for _,p in ipairs(v.p) do p.in_focus = false end
 		v.in_focus = false
 	end
+end
+
+
+local function load_mode_list()
+  mode_list = UI:FoldList(UI:List(UI:Label(UI:Rect(10, 10, 110, 26), 'Mode')))
+    mode_list:add_element(UI:Label(UI:Rect(), 'Focus'))
+    mode_list:add_element(UI:Label(UI:Rect(), 'Edit'))
+    mode_list:add_element(UI:Label(UI:Rect(), 'Pen'))
+    mode_list:add_element(UI:Label(UI:Rect(), 'Line'))
+    mode_list:add_element(UI:Label(UI:Rect(), 'Rectangle'))
+end
+
+local function load_color_list()
+  color_list = UI:FoldList(UI:List(UI:Label(UI:Rect(130, 10, 110, 26), 'Color')))
+    color_list:add_element(UI:Label(UI:Rect(), 'red'))
+    color_list:add_element(UI:Label(UI:Rect(), 'green'))
+    color_list:add_element(UI:Label(UI:Rect(), 'blue'))
+    color_list:add_element(UI:Label(UI:Rect(), 'lightbrown'))
+end
+
+local function load_op_buttons()
+  transform_button = UI:Button(UI:Label(UI:Rect(250, 10, 110, 26), 'Transform'))
+  scale_button = UI:Button(UI:Label(UI:Rect(370, 10, 110, 26), 'Scale'))
+  mirror_button = UI:Button(UI:Label(UI:Rect(490, 10, 110, 26), 'Mirror'))
+  rotate_button = UI:Button(UI:Label(UI:Rect(610, 10, 110, 26), 'Rotate'))
 end
 
 
@@ -33,32 +59,16 @@ function love.load()
   drawing = false
   prev_mouse_pos = {0, 0}
   current_color = palette.blue
-  mode_list = UI:FoldList(UI:List(UI:Label(UI:Rect(10, 10, 110, 26), 'Mode')))
-    mode_list:add_element(UI:Label(UI:Rect(), 'Focus'))
-    mode_list:add_element(UI:Label(UI:Rect(), 'Edit'))
-    mode_list:add_element(UI:Label(UI:Rect(), 'Pen'))
-    mode_list:add_element(UI:Label(UI:Rect(), 'Line'))
-    mode_list:add_element(UI:Label(UI:Rect(), 'Rectangle'))
-  color_list = UI:FoldList(UI:List(UI:Label(UI:Rect(130, 10, 110, 26), 'Color')))
-    color_list:add_element(UI:Label(UI:Rect(), 'red'))
-    color_list:add_element(UI:Label(UI:Rect(), 'green'))
-    color_list:add_element(UI:Label(UI:Rect(), 'blue'))
-    color_list:add_element(UI:Label(UI:Rect(), 'lightbrown'))
-  transform_button  = UI:Button(UI:Label(UI:Rect(250, 10, 110, 26), 'Transform'))
-  scale_button 			= UI:Button(UI:Label(UI:Rect(370, 10, 110, 26), 'Scale'))
-  mirror_button 		= UI:Button(UI:Label(UI:Rect(490, 10, 110, 26), 'Mirror'))
-  rotate_button 		= UI:Button(UI:Label(UI:Rect(610, 10, 110, 26), 'Rotate'))
+	load_mode_list()
+	load_color_list()
+	load_op_buttons()
   state_line:load()
 	groups = {}
 	group_list = UI:FoldList(UI:List(UI:Label(UI:Rect(love.graphics.getWidth() - 120, 10, 110, 26), 'Groups')))
 end
 
 
-function love.update(dt)
-  mode_list:update()
-  color_list:update()
-	group_list:update()
-  state_line:update()
+local function update_drawing_obj()
   if drawing then
     local last_obj = obj_stack[#obj_stack]
     if last_obj then 
@@ -69,6 +79,9 @@ function love.update(dt)
       last_point.x, last_point.y = love.mouse.getPosition() 
     end
   end
+end
+
+local function move_selected_objects()
   if mode_list.active_element.text == 'Edit' and love.mouse.isDown(1) then
     for _,obj in ipairs(obj_stack) do
       for _,p in ipairs(obj.p) do
@@ -80,9 +93,27 @@ function love.update(dt)
       end
     end
   end
+end
+
+local function update_windows()
 	transform_window:update()
 	transform_window.m = tonumber(table.concat(transform_window.m_in.text)) or 0
 	transform_window.n = tonumber(table.concat(transform_window.n_in.text)) or 0
+	scale_window:update()
+	scale_window.a = tonumber(table.concat(scale_window.a_in.text)) or 0
+	scale_window.b = tonumber(table.concat(scale_window.b_in.text)) or 0
+	rotate_window:update()
+	rotate_window.alpha = tonumber(table.concat(rotate_window.alpha_in.text)) or 0
+end
+
+function love.update(dt)
+  mode_list:update()
+  color_list:update()
+	group_list:update()
+  state_line:update()
+	update_drawing_obj()
+	move_selected_objects()
+	update_windows()
   prev_mouse_pos = {love.mouse.getX(), love.mouse.getY()}
 end
 
@@ -99,7 +130,10 @@ function love.draw()
 	
 	group_list:draw()
   state_line:draw()
+	
 	transform_window:draw()
+	scale_window:draw()
+	rotate_window:draw()
 end
 
 
@@ -111,22 +145,22 @@ local function activate_win_event(args)
 	args.win.active = true
 end
 
-function love.mousepressed(x, y, button)
-  if button > 1 then return end
-  if y > state_line.y then return end
+local function mpressed_buttons(x, y, button)
 	transform_button:mousepressed(x, y, button, activate_win_event,
 		{win = transform_window}
 	)
 	scale_button:mousepressed(x, y, button, activate_win_event,
-		{}
+		{win = scale_window}
 	)
 	mirror_button:mousepressed(x, y, button, activate_win_event,
-		{}
+		{win = mirror_window}
 	)
 	rotate_button:mousepressed(x, y, button, activate_win_event,
-		{}
+		{win = rotate_window}
 	)
-  if y < mode_list.y + mode_list.header.height then return end
+end
+
+local function mpressed_windows(x, y, button)
 	transform_window:mousepressed(x, y, button,
 		function(args)
 			for _,v in ipairs(args.objects) do
@@ -140,6 +174,50 @@ function love.mousepressed(x, y, button)
 		end,
 		{objects = obj_stack, win = transform_window}
 	)
+	scale_window:mousepressed(x, y, button,
+		function(args)
+			for _,v in ipairs(args.objects) do
+				if v.in_focus then
+					for _,p in ipairs(v.p) do
+						p.x = p.x * args.win.a
+						p.y = p.y * args.win.b
+					end
+				end
+			end
+		end,
+		{objects = obj_stack, win = scale_window}
+	)
+	rotate_window:mousepressed(x, y, button,
+		function(args)
+			local angle = args.win.alpha * 180 / math.pi
+			local sina = math.sin(angle)
+			local cosa = math.cos(angle)
+			local rotate_matrix = {
+				{cosa, sina, 0},
+				{-sina, cosa, 0},
+				{0, 0, 1}
+			}
+			local points_matrix = {}
+			local focused = {}
+			for _,v in ipairs(args.objects) do
+				if v.in_focus then
+					for _,p in ipairs(v.p) do
+						table.insert(focused, p)
+						table.insert(points_matrix, {p.x, p.y, 1})
+					end
+				end
+			end
+			local dot = matrix_dot(points_matrix, rotate_matrix)
+			for i=1, #dot do
+				focused[i].x = dot[i][1]
+				focused[i].y = dot[i][2]
+			end
+		end,
+		{objects = obj_stack, win = rotate_window}
+	)
+end
+
+local function handle_drawing(x, y, button)
   local temp_obj = nil
   if mode_list.active_element.text == 'Edit' then return end
 	unfocus_all(obj_stack)
@@ -164,13 +242,24 @@ function love.mousepressed(x, y, button)
   end
 end
 
-
-function love.mousereleased(x, y, button)
+function love.mousepressed(x, y, button)
   if button > 1 then return end
+  if y > state_line.y then return end
+	mpressed_buttons(x, y, button)
+	mpressed_windows(x, y, button)
+  if y < mode_list.y + mode_list.header.height then return end
+	handle_drawing(x, y, button)
+end
+
+
+local function mreleased_buttons(x, y, button)
 	transform_button:mousereleased(x, y, button)
 	scale_button:mousereleased(x, y, button)
 	mirror_button:mousereleased(x, y, button)
 	rotate_button:mousereleased(x, y, button)
+end
+
+local function handle_focus(x, y, button)
   drawing = false
   if mode_list.active_element.text == 'Focus' then
     local focus_rect = obj_stack[#obj_stack]
@@ -189,6 +278,9 @@ function love.mousereleased(x, y, button)
     table.remove(obj_stack)
     if one_focused then mode_list:set_active('Edit') end
   end
+end
+
+local function mreleased_lists(x, y, button)
   mode_list:mousereleased(x, y, button)
   color_list:mousereleased(x, y, button)
   current_color = palette[color_list.active_element.text]
@@ -198,15 +290,25 @@ function love.mousereleased(x, y, button)
 		focus_all(groups[i-1].elements) 
 		mode_list:set_active('Edit')
 	end
-  state_line:mousereleased(x, y, button)
+end
+
+local function mreleased_windows(x, y, button)
 	transform_window:mousereleased(x, y, button)
+	scale_window:mousereleased(x, y, button)
+	rotate_window:mousereleased(x, y, button)
+end
+
+function love.mousereleased(x, y, button)
+  if button > 1 then return end
+	mreleased_buttons(x, y, button)
+	handle_focus(x, y, button)
+	mreleased_lists(x, y, button)
+	mreleased_windows(x, y, button)
+  state_line:mousereleased(x, y, button)
 end
 
 
-function love.keypressed(key)
-	if state_line:keypressed(key) then return end
-	if transform_window:keypressed(key) then return end
-  local save_filename = 'save'
+local function handle_hotkeys(key)local save_filename = 'save'
   if love.keyboard.isDown('lctrl') then
     if key == 'z' then 
 			table.remove(obj_stack)
@@ -238,4 +340,12 @@ function love.keypressed(key)
 		unfocus_all(obj_stack)
 		mode_list:set_active('Focus')
   end
+end
+
+function love.keypressed(key)
+	if state_line:keypressed(key) then return end
+	if transform_window:keypressed(key) then return end
+	if scale_window:keypressed(key) then return end
+	if rotate_window:keypressed(key) then return end
+	handle_hotkeys(key)
 end 

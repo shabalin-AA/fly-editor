@@ -72,11 +72,11 @@ function state_line:draw()
 end
 
 function state_line:mousereleased(x, y, button)
-	self.a_input:mousereleased(x, y, button)
-	self.b_input:mousereleased(x, y, button)
+	if self.a_input:mousereleased(x, y, button) then return true end
+	if self.b_input:mousereleased(x, y, button) then return true end
 end
 
 function state_line:keypressed(key)
-	self.a_input:keypressed(key)
-	self.b_input:keypressed(key)
+	if self.a_input:keypressed(key) then return true end
+	if self.b_input:keypressed(key) then return true end
 end
