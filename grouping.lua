@@ -12,6 +12,3 @@ function Group(elements, name)
 	
 	return this
 end
-
-
---

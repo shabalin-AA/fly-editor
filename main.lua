@@ -58,12 +58,17 @@ function love.load()
   drawing = false
   prev_mouse_pos = {0, 0}
   current_color = palette.blue
+	groups = {}
 	load_mode_list()
 	load_color_list()
+	group_list = UI:FoldList(UI:List(
+		UI:Label(
+			UI:Rect(love.graphics.getWidth() - 120, 10, 110, 26), 
+			'Groups'
+		)
+	))
 	load_op_buttons()
   state_line:load()
-	groups = {}
-	group_list = UI:FoldList(UI:List(UI:Label(UI:Rect(love.graphics.getWidth() - 120, 10, 110, 26), 'Groups')))
 end
 
 
@@ -110,32 +115,45 @@ local function update_windows()
 end
 
 function love.update(dt)
+	update_drawing_obj()
+	move_selected_objects()
   mode_list:update()
   color_list:update()
 	group_list:update()
   state_line:update()
-	update_drawing_obj()
-	move_selected_objects()
 	update_windows()
   prev_mouse_pos = {love.mouse.getX(), love.mouse.getY()}
 end
 
 
-function love.draw()
+local function draw_objects()
   for _,v in ipairs(obj_stack) do v:draw() end
+end
+
+local function draw_lists()
   mode_list:draw()
   color_list:draw()
+	group_list:draw()
+  state_line:draw()
+end
 
+local function draw_buttons()
 	transform_button:draw()
 	scale_button:draw()
 	rotate_button:draw()
-	
-	group_list:draw()
-  state_line:draw()
-	
+end
+
+local function draw_windows()
 	transform_window:draw()
 	scale_window:draw()
 	rotate_window:draw()
+end
+
+function love.draw()
+	draw_objects()
+	draw_buttons()
+	draw_lists()
+	draw_windows()
 end
 
 
@@ -234,6 +252,7 @@ local function handle_drawing(x, y, button)
     temp_obj = Rectangle(Point(x,y), Point(x,y))
   elseif mode_list.active_element.text == 'Focus' then 
     temp_obj = Rectangle(Point(x,y), Point(x,y))
+		temp_obj.type = 'FocusRectangle'
   elseif mode_list.active_element.text == 'Pen' then
     temp_obj = Points()
     table.insert(temp_obj.p, Point(x,y))
@@ -268,6 +287,7 @@ local function handle_focus(x, y, button)
   drawing = false
   if mode_list.active_element.text == 'Focus' then
     local focus_rect = obj_stack[#obj_stack]
+		if focus_rect.type ~= 'FocusRectangle' then return end
     local one_focused = false
     for _,v in ipairs(obj_stack) do
       v.in_focus = true
@@ -286,11 +306,18 @@ local function handle_focus(x, y, button)
 end
 
 local function mreleased_lists(x, y, button)
-  mode_list:mousereleased(x, y, button)
-  color_list:mousereleased(x, y, button)
-  current_color = palette[color_list.active_element.text]
+  if mode_list:mousereleased(x, y, button) then
+		if drawing then table.remove(obj_stack) end
+		return
+	end
+  if color_list:mousereleased(x, y, button) then
+  	current_color = palette[color_list.active_element.text]
+		if drawing then table.remove(obj_stack) end
+		return 
+	end
 	local _, i = group_list:mousereleased(x, y, button)
 	if i then 
+		if drawing then table.remove(obj_stack) end
 		unfocus_all(obj_stack)
 		focus_all(groups[i-1].elements) 
 		mode_list:set_active('Edit')
@@ -306,9 +333,9 @@ end
 function love.mousereleased(x, y, button)
   if button > 1 then return end
 	mreleased_buttons(x, y, button)
-	handle_focus(x, y, button)
 	mreleased_lists(x, y, button)
 	mreleased_windows(x, y, button)
+	handle_focus(x, y, button)
   state_line:mousereleased(x, y, button)
 end
 
@@ -326,6 +353,7 @@ local function handle_hotkeys(key)local save_filename = 'save'
       end
 		elseif key == 'a' then
 			focus_all(obj_stack)
+			mode_list:set_active('Edit')
 		elseif key == 'g' then
 			local group = {}
 			for _,v in ipairs(obj_stack) do

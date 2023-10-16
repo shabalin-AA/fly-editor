@@ -58,7 +58,6 @@ function UI:Label(rect, text, text_color)
   return this
 end
 
-
 function UI:List(header_label)
   local this = UI:Rect()
 	this.x = header_label.x
@@ -128,7 +127,6 @@ function UI:List(header_label)
   return this
 end
 
-
 function UI:FoldList(list)
 	local this = list
 	this.folded = true
@@ -151,7 +149,6 @@ function UI:FoldList(list)
 	
 	return this
 end
-
 
 function UI:TextInput(rect, text_color) 
   local this = rect
@@ -228,7 +225,6 @@ function UI:TextInput(rect, text_color)
   return this
 end
 
-
 function UI:Button(label, active_color)
 	local this = label
 	
@@ -265,7 +261,6 @@ function UI:Button(label, active_color)
 	
 	return this
 end
-
 
 function UI:Window(rect, title)
 	local this = {}
@@ -345,4 +340,3 @@ function UI:Window(rect, title)
 	
 	return this
 end
-

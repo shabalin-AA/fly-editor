@@ -6,6 +6,7 @@ local W, H = love.window.getDesktopDimensions()
 local win_x = W/2 - win_w/2
 local win_y = H/2 - win_h/2 - 100
 
+-- transform window
 transform_window = UI:Window(
 	UI:Rect(win_x, win_y, win_w, win_h, palette.grey, palette.lightbrown), 
 	'Transform'
@@ -43,7 +44,7 @@ transform_window.n_in = transform_window.elements[
 transform_window.m = 0
 transform_window.n = 0
 
-
+-- scale window
 scale_window = UI:Window(
 	UI:Rect(win_x, win_y-100, win_w, win_h*2, palette.grey, palette.lightbrown), 
 	'Scale'
@@ -121,8 +122,7 @@ scale_window.n_in = scale_window.elements[
 scale_window.m = 0
 scale_window.n = 0
 
-
-
+-- rotate window
 rotate_window = UI:Window(
 	UI:Rect(win_x, win_y-100, win_w, win_h+100, palette.grey, palette.lightbrown), 
 	'Rotate'
