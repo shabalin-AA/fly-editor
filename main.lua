@@ -104,15 +104,20 @@ local function update_windows()
 	transform_window:update()
 	transform_window.m = tonumber(table.concat(transform_window.m_in.text)) or 0
 	transform_window.n = tonumber(table.concat(transform_window.n_in.text)) or 0
+	transform_window.l = tonumber(table.concat(transform_window.l_in.text)) or 0
 	scale_window:update()
 	scale_window.a = tonumber(table.concat(scale_window.a_in.text)) or 1
 	scale_window.b = tonumber(table.concat(scale_window.b_in.text)) or 1
+	scale_window.c = tonumber(table.concat(scale_window.c_in.text)) or 1
 	scale_window.m = tonumber(table.concat(scale_window.m_in.text)) or 0
 	scale_window.n = tonumber(table.concat(scale_window.n_in.text)) or 0
+	scale_window.l = tonumber(table.concat(scale_window.l_in.text)) or 0
 	rotate_window:update()
-	rotate_window.alpha = tonumber(table.concat(rotate_window.alpha_in.text)) or 0
+	rotate_window.phi = tonumber(table.concat(rotate_window.phi_in.text)) or 0
+	rotate_window.theta = tonumber(table.concat(rotate_window.theta_in.text)) or 0
 	rotate_window.m = tonumber(table.concat(rotate_window.m_in.text)) or 0
 	rotate_window.n = tonumber(table.concat(rotate_window.n_in.text)) or 0
+	rotate_window.l = tonumber(table.concat(rotate_window.l_in.text)) or 0
 end
 
 function love.update(dt)
@@ -135,7 +140,7 @@ local function draw_lists()
   mode_list:draw()
   color_list:draw()
 	group_list:draw()
-  state_line:draw(axis_mode)
+  state_line:draw()
 end
 
 local function draw_buttons()
@@ -185,10 +190,12 @@ local function mpressed_windows(x, y, button)
 					for _,p in ipairs(v.p) do
 						p.x = p.x + args.win.m
 						p.y = p.y + args.win.n
+						p.z = p.z  +args.win.l
 					end
 				end
 			end
 			args.win.m_in.text = {}
+			args.win.n_in.text = {}
 			args.win.n_in.text = {}
 		end,
 		{objects = obj_stack, win = transform_window}
@@ -200,25 +207,32 @@ local function mpressed_windows(x, y, button)
 					for _,p in ipairs(v.p) do
 						p.x = (p.x - args.win.m) * args.win.a + args.win.m
 						p.y = (p.y - args.win.n) * args.win.b + args.win.n
+						p.z = (p.z - args.win.l) * args.win.c + args.win.l
 					end
 				end
 			end
 			args.win.a_in.text = {}
 			args.win.b_in.text = {}
+			args.win.c_in.text = {}
 			args.win.m_in.text = {}
 			args.win.n_in.text = {}
+			args.win.l_in.text = {}
 		end,
 		{objects = obj_stack, win = scale_window}
 	) then return true end
 	if rotate_window:mousepressed(x, y, button,
 		function(args)
-			local angle = args.win.alpha * 180 / math.pi
-			local sina = math.sin(angle)
-			local cosa = math.cos(angle)
+			local phi = args.win.phi * 180 / math.pi
+			local theta = args.win.theta * 180 / math.pi
+			local sin_phi = math.sin(phi)
+			local cos_phi = math.cos(phi)
+			local sin_theta = math.sin(theta)
+			local cos_theta = math.cos(theta)
 			local rotate_matrix = {
-				{cosa, sina, 0},
-				{-sina, cosa, 0},
-				{0, 0, 1}
+				{cos_phi, sin_phi*sin_theta, -sin_phi*cos_theta, 0},
+				{0, cos_theta, sin_theta, 0},
+				{sin_phi, -cos_phi*sin_theta, cos_phi*cos_theta, 0},
+				{0, 0, 0, 1}
 			}
 			local points_matrix = {}
 			local focused = {}
@@ -226,7 +240,9 @@ local function mpressed_windows(x, y, button)
 				if v.in_focus then
 					for _,p in ipairs(v.p) do
 						table.insert(focused, p)
-						table.insert(points_matrix, {p.x - args.win.m, p.y - args.win.n, 1})
+						table.insert(points_matrix, 
+							{p.x - args.win.m, p.y - args.win.n, p.z - args.win.l, 1}
+						)
 					end
 				end
 			end
@@ -234,10 +250,13 @@ local function mpressed_windows(x, y, button)
 			for i=1, #dot do
 				focused[i].x = dot[i][1] + args.win.m
 				focused[i].y = dot[i][2] + args.win.n
+				focused[i].z = dot[i][3] + args.win.l
 			end
-			args.win.alpha_in.text = {}
+			args.win.phi_in.text = {}
+			args.win.theta_in.text = {}
 			args.win.m_in.text = {}
 			args.win.n_in.text = {}
+			args.win.l_in.text = {}
 		end,
 		{objects = obj_stack, win = rotate_window}
 	) then return true end

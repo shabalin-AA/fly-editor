@@ -13,11 +13,6 @@ function Point(x,y,z)
     love.graphics.circle('line', self.x, self.y, self.r)
   end
 
-  function this:same_with(x,y)
-    return  x > self.x - 2*self.r and x < self.x + 2*self.r and
-            y > self.y - 2*self.r and y < self.y + 2*self.r
-  end
-	
 	function this:swap_coords()
 		local x_backup = self.x
 		self.x = self.y

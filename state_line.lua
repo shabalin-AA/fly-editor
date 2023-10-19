@@ -30,7 +30,7 @@ function state_line:update()
   self.active = self.a_input.active or self.b_input.active or self.c_input.active
 end
 
-function state_line:draw(axis_mode)
+function state_line:draw()
   self:draw_back()
   self:draw_border()
   setColor(palette.grey)
