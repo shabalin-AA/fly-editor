@@ -9,6 +9,7 @@ require 'state_line'
 require 'grouping'
 require 'popup_windows'
 require 'matrix'
+require 'axis'
 
 
 local function focus_all(arr)
@@ -104,8 +105,8 @@ local function update_windows()
 	transform_window.m = tonumber(table.concat(transform_window.m_in.text)) or 0
 	transform_window.n = tonumber(table.concat(transform_window.n_in.text)) or 0
 	scale_window:update()
-	scale_window.a = tonumber(table.concat(scale_window.a_in.text)) or 0
-	scale_window.b = tonumber(table.concat(scale_window.b_in.text)) or 0
+	scale_window.a = tonumber(table.concat(scale_window.a_in.text)) or 1
+	scale_window.b = tonumber(table.concat(scale_window.b_in.text)) or 1
 	scale_window.m = tonumber(table.concat(scale_window.m_in.text)) or 0
 	scale_window.n = tonumber(table.concat(scale_window.n_in.text)) or 0
 	rotate_window:update()
@@ -134,7 +135,7 @@ local function draw_lists()
   mode_list:draw()
   color_list:draw()
 	group_list:draw()
-  state_line:draw()
+  state_line:draw(axis_mode)
 end
 
 local function draw_buttons()
@@ -372,6 +373,11 @@ local function handle_hotkeys(key)local save_filename = 'save'
 	elseif key == 'escape' then
 		unfocus_all(obj_stack)
 		mode_list:set_active('Focus')
+	elseif key == 'tab' then
+		axis_mode = math.fmod(axis_mode, 3) + 1
+		for _,v in ipairs(obj_stack) do
+			for _,p in ipairs(v.p) do p:swap_coords() end
+		end
   end
 end
 
