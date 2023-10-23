@@ -81,7 +81,7 @@ local function update_drawing_obj()
         table.insert(last_obj.p, Point())
       end
       local last_point = last_obj.p[#last_obj.p]
-      last_point.x, last_point.y = love.mouse.getPosition() 
+      last_point[ axis[axis_mode+0] ], last_point[ axis[axis_mode+1] ] = love.mouse.getPosition() 
     end
   end
 end
@@ -91,8 +91,8 @@ local function move_selected_objects()
     for _,obj in ipairs(obj_stack) do
       for _,p in ipairs(obj.p) do
         if p.in_focus then 
-          p.x = p.x + love.mouse.getX() - prev_mouse_pos[1]
-          p.y = p.y + love.mouse.getY() - prev_mouse_pos[2]
+          p[axis[axis_mode+0] ] = p[axis[axis_mode+0] ] + love.mouse.getX() - prev_mouse_pos[1]
+          p[axis[axis_mode+1] ] = p[axis[axis_mode+1] ] + love.mouse.getY() - prev_mouse_pos[2]
           state_line.chosen_obj = obj
         end
       end
@@ -113,14 +113,20 @@ local function update_windows()
 	scale_window.n = tonumber(table.concat(scale_window.n_in.text)) or 0
 	scale_window.l = tonumber(table.concat(scale_window.l_in.text)) or 0
 	rotate_window:update()
-	rotate_window.phi = tonumber(table.concat(rotate_window.phi_in.text)) or 0
-	rotate_window.theta = tonumber(table.concat(rotate_window.theta_in.text)) or 0
+	rotate_window.alpha = tonumber(table.concat(rotate_window.alpha_in.text)) or 0
+	rotate_window.beta = tonumber(table.concat(rotate_window.beta_in.text)) or 0
+	rotate_window.gamma = tonumber(table.concat(rotate_window.gamma_in.text)) or 0
 	rotate_window.m = tonumber(table.concat(rotate_window.m_in.text)) or 0
 	rotate_window.n = tonumber(table.concat(rotate_window.n_in.text)) or 0
 	rotate_window.l = tonumber(table.concat(rotate_window.l_in.text)) or 0
 end
 
 function love.update(dt)
+	for _,v in ipairs(obj_stack) do
+		for _,p in ipairs(v.p) do
+			p:update()
+		end
+	end
 	update_drawing_obj()
 	move_selected_objects()
   mode_list:update()
@@ -190,13 +196,13 @@ local function mpressed_windows(x, y, button)
 					for _,p in ipairs(v.p) do
 						p.x = p.x + args.win.m
 						p.y = p.y + args.win.n
-						p.z = p.z  +args.win.l
+						p.z = p.z + args.win.l
 					end
 				end
-			end
+			end	
 			args.win.m_in.text = {}
 			args.win.n_in.text = {}
-			args.win.n_in.text = {}
+			args.win.l_in.text = {}
 		end,
 		{objects = obj_stack, win = transform_window}
 	) then return true end
@@ -222,16 +228,19 @@ local function mpressed_windows(x, y, button)
 	) then return true end
 	if rotate_window:mousepressed(x, y, button,
 		function(args)
-			local phi = args.win.phi * 180 / math.pi
-			local theta = args.win.theta * 180 / math.pi
-			local sin_phi = math.sin(phi)
-			local cos_phi = math.cos(phi)
-			local sin_theta = math.sin(theta)
-			local cos_theta = math.cos(theta)
+			local a = args.win.alpha * 180 / math.pi
+			local b = args.win.beta * 180 / math.pi
+			local g = args.win.gamma * 180 / math.pi
+			local sin_a = math.sin(a)
+			local cos_a = math.cos(a)
+			local sin_b = math.sin(b)
+			local cos_b = math.cos(b)
+			local sin_g = math.sin(g)
+			local cos_g = math.cos(g)
 			local rotate_matrix = {
-				{cos_phi, sin_phi*sin_theta, -sin_phi*cos_theta, 0},
-				{0, cos_theta, sin_theta, 0},
-				{sin_phi, -cos_phi*sin_theta, cos_phi*cos_theta, 0},
+				{cos_b*cos_g, -sin_g*cos_b, sin_b, 0},
+				{sin_a*sin_b*cos_g+sin_g*cos_a, -sin_a*sin_b*sin_g+cos_a*cos_g, -sin_a*cos_b, 0},
+				{sin_a*sin_g-sin_b*cos_a*cos_g, sin_a*cos_g+sin_b*sin_g*cos_a, cos_a*cos_b, 0},
 				{0, 0, 0, 1}
 			}
 			local points_matrix = {}
@@ -252,8 +261,9 @@ local function mpressed_windows(x, y, button)
 				focused[i].y = dot[i][2] + args.win.n
 				focused[i].z = dot[i][3] + args.win.l
 			end
-			args.win.phi_in.text = {}
-			args.win.theta_in.text = {}
+			args.win.alpha_in.text = {}
+			args.win.beta_in.text = {}
+			args.win.gamma_in.text = {}
 			args.win.m_in.text = {}
 			args.win.n_in.text = {}
 			args.win.l_in.text = {}
@@ -312,10 +322,10 @@ local function handle_focus(x, y, button)
     for _,v in ipairs(obj_stack) do
       v.in_focus = true
       for _,p in ipairs(v.p) do
-        p.in_focus = p.x > math.min(focus_rect.p[1].x, focus_rect.p[2].x) and
-                     p.x < math.max(focus_rect.p[1].x, focus_rect.p[2].x) and
-                     p.y > math.min(focus_rect.p[1].y, focus_rect.p[2].y) and
-                     p.y < math.max(focus_rect.p[1].y, focus_rect.p[2].y)
+        p.in_focus = p[ axis[axis_mode+0] ] > math.min(focus_rect.p[1][ axis[axis_mode+0] ], focus_rect.p[2][ axis[axis_mode+0] ]) and
+                     p[ axis[axis_mode+0] ] < math.max(focus_rect.p[1][ axis[axis_mode+0] ], focus_rect.p[2][ axis[axis_mode+0] ]) and
+                     p[ axis[axis_mode+1] ] > math.min(focus_rect.p[1][ axis[axis_mode+1] ], focus_rect.p[2][ axis[axis_mode+1] ]) and
+                     p[ axis[axis_mode+1] ] < math.max(focus_rect.p[1][ axis[axis_mode+1] ], focus_rect.p[2][ axis[axis_mode+1] ])
         v.in_focus = v.in_focus and p.in_focus
         one_focused = one_focused or p.in_focus
       end
@@ -394,9 +404,6 @@ local function handle_hotkeys(key)local save_filename = 'save'
 		mode_list:set_active('Focus')
 	elseif key == 'tab' then
 		axis_mode = math.fmod(axis_mode, 3) + 1
-		for _,v in ipairs(obj_stack) do
-			for _,p in ipairs(v.p) do p:swap_coords() end
-		end
   end
 end
 

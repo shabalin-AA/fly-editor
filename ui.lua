@@ -312,6 +312,9 @@ function UI:Window(rect, title)
 		if self.elements[2]:mousepressed(x, y, button, 
 			function(args) 
 				args.win.active = false 
+				for _,v in pairs(args.win.elements) do
+					v.active = false
+				end
 			end, 
 			{win = self}
 		) then onclose_event(onclose_event_args) end

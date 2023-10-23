@@ -56,9 +56,6 @@ transform_window.l_in = transform_window.elements[
 		)
 	)
 ]
-transform_window.m = 0
-transform_window.n = 0
-transform_window.l = 0
 
 -- scale window
 scale_window = UI:Window(
@@ -110,9 +107,6 @@ scale_window.c_in = scale_window.elements[
 		)
 	)
 ]
-scale_window.a = 1
-scale_window.b = 1
-scale_window.c = 1
 
 scale_window:add_element(
 	UI:Label(
@@ -166,41 +160,53 @@ scale_window.l_in = scale_window.elements[
 		)
 	)
 ]
-scale_window.m = 0
-scale_window.n = 0
-scale_window.l = 0
 
 -- rotate window
 rotate_window = UI:Window(
-	UI:Rect(win_x, win_y-100, win_w, win_h*2-50, palette.grey, palette.lightbrown), 
+	UI:Rect(win_x, win_y-100, win_w, win_h*2, palette.grey, palette.lightbrown), 
 	'Rotate'
 )
 rotate_window:add_element(
 	UI:Label(
-		UI:Rect(20, 50, 80, 24, nil, palette.grey), 
-		'phi = ', 
+		UI:Rect(20, 50, 100, 24, nil, palette.grey), 
+		'alpha = ', 
 		palette.bone
 	)
 )
-rotate_window.phi_in = rotate_window.elements[
+rotate_window.alpha_in = rotate_window.elements[
 	rotate_window:add_element(
 		UI:TextInput(
-			UI:Rect(100, 50, 120, 24, palette.bone, palette.grey), 
+			UI:Rect(120, 50, 120, 24, palette.bone, palette.grey), 
 			palette.grey
 		)
 	)
 ]
 rotate_window:add_element(
 	UI:Label(
-		UI:Rect(20, 100, 80, 24, nil, palette.grey), 
-		'theta = ', 
+		UI:Rect(20, 100, 100, 24, nil, palette.grey), 
+		'beta = ', 
 		palette.bone
 	)
 )
-rotate_window.theta_in = rotate_window.elements[
+rotate_window.beta_in = rotate_window.elements[
 	rotate_window:add_element(
 		UI:TextInput(
-			UI:Rect(100, 100, 120, 24, palette.bone, palette.grey), 
+			UI:Rect(120, 100, 120, 24, palette.bone, palette.grey), 
+			palette.grey
+		)
+	)
+]
+rotate_window:add_element(
+	UI:Label(
+		UI:Rect(10, 150, 100, 24, nil, palette.grey), 
+		'gamma = ', 
+		palette.bone
+	)
+)
+rotate_window.gamma_in = rotate_window.elements[
+	rotate_window:add_element(
+		UI:TextInput(
+			UI:Rect(120, 150, 120, 24, palette.bone, palette.grey), 
 			palette.grey
 		)
 	)
@@ -208,34 +214,19 @@ rotate_window.theta_in = rotate_window.elements[
 
 rotate_window:add_element(
 	UI:Label(
-		UI:Rect(20, 150, 210, 24, nil, palette.grey), 
+		UI:Rect(20, 200, 210, 24, nil, palette.grey), 
 		'relative to point with coordinates:', 
 		palette.bone
 	)
 )
 rotate_window:add_element(
 	UI:Label(
-		UI:Rect(20, 200, 60, 24, nil, palette.grey), 
+		UI:Rect(20, 250, 60, 24, nil, palette.grey), 
 		'm = ', 
 		palette.bone
 	)
 )
 rotate_window.m_in = rotate_window.elements[
-	rotate_window:add_element(
-		UI:TextInput(
-			UI:Rect(80, 200, 120, 24, palette.bone, palette.grey), 
-			palette.grey
-		)
-	)
-]
-rotate_window:add_element(
-	UI:Label(
-		UI:Rect(20, 250, 60, 24, nil, palette.grey), 
-		'n = ', 
-		palette.bone
-	)
-)
-rotate_window.n_in = rotate_window.elements[
 	rotate_window:add_element(
 		UI:TextInput(
 			UI:Rect(80, 250, 120, 24, palette.bone, palette.grey), 
@@ -246,11 +237,11 @@ rotate_window.n_in = rotate_window.elements[
 rotate_window:add_element(
 	UI:Label(
 		UI:Rect(20, 300, 60, 24, nil, palette.grey), 
-		'l = ', 
+		'n = ', 
 		palette.bone
 	)
 )
-rotate_window.l_in = rotate_window.elements[
+rotate_window.n_in = rotate_window.elements[
 	rotate_window:add_element(
 		UI:TextInput(
 			UI:Rect(80, 300, 120, 24, palette.bone, palette.grey), 
@@ -258,6 +249,18 @@ rotate_window.l_in = rotate_window.elements[
 		)
 	)
 ]
-rotate_window.m = 0
-rotate_window.n = 0
-rotate_window.l = 0
+rotate_window:add_element(
+	UI:Label(
+		UI:Rect(20, 350, 60, 24, nil, palette.grey), 
+		'l = ', 
+		palette.bone
+	)
+)
+rotate_window.l_in = rotate_window.elements[
+	rotate_window:add_element(
+		UI:TextInput(
+			UI:Rect(80, 350, 120, 24, palette.bone, palette.grey), 
+			palette.grey
+		)
+	)
+]
