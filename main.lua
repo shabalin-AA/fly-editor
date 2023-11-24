@@ -10,12 +10,13 @@ require 'grouping'
 require 'popup_windows'
 require 'matrix'
 require 'axis'
+require 'camera'
 
 
 local function focus_all(arr)
-	for _,v in ipairs(arr) do
-		for _,p in ipairs(v.p) do p.in_focus = true end
-		v.in_focus = true
+	for i=4, #obj_stack do
+		for _,p in ipairs(obj_stack[i].p) do p.in_focus = true end
+		obj_stack[i].in_focus = true
 	end
 end
 
@@ -31,9 +32,10 @@ local function load_mode_list()
   mode_list = UI:FoldList(UI:List(UI:Label(UI:Rect(10, 10, 110, 26), 'Mode')))
     mode_list:add_element(UI:Label(UI:Rect(), 'Focus'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Edit'))
+    mode_list:add_element(UI:Label(UI:Rect(), '3D'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Pen'))
     mode_list:add_element(UI:Label(UI:Rect(), 'Line'))
-    mode_list:add_element(UI:Label(UI:Rect(), 'Rectangle'))
+    -- mode_list:add_element(UI:Label(UI:Rect(), 'Rectangle'))
 end
 
 local function load_color_list()
@@ -41,11 +43,11 @@ local function load_color_list()
     color_list:add_element(UI:Label(UI:Rect(), 'red'))
     color_list:add_element(UI:Label(UI:Rect(), 'green'))
     color_list:add_element(UI:Label(UI:Rect(), 'blue'))
-    color_list:add_element(UI:Label(UI:Rect(), 'lightbrown'))
+    -- color_list:add_element(UI:Label(UI:Rect(), 'lightbrown'))
 end
 
 local function load_op_buttons()
-  transform_button = UI:Button(UI:Label(UI:Rect(250, 10, 110, 26), 'Transform'))
+  translate_button = UI:Button(UI:Label(UI:Rect(250, 10, 110, 26), 'Translate'))
   scale_button = UI:Button(UI:Label(UI:Rect(370, 10, 110, 26), 'Scale'))
   rotate_button = UI:Button(UI:Label(UI:Rect(490, 10, 110, 26), 'Rotate'))
 end
@@ -55,7 +57,17 @@ function love.load()
   love.graphics.setBackgroundColor(palette.grey.r, palette.grey.g, palette.grey.b)
   love.graphics.setNewFont(18)
   love.graphics.setLineWidth(2)
-  obj_stack = {} 
+	local o = Point()
+	o[1], o[2], o[3], o[4] = 0, 0, 0, 1
+	local i = Point()
+	i[1], i[2], i[3], i[4] = 1000, 0, 0, 1
+	local j = Point()
+	j[1], j[2], j[3], j[4] = 0, 1000, 0, 1
+	local k = Point()
+	k[1], k[2], k[3], k[4] = 0, 0, 1000, 1
+  obj_stack = {
+		Line(o,i,{r=0.5,g=0.5,b=0.5}), Line(o,j,{r=0.5,g=0.5,b=0.5}), Line(o,k,{r=0.5,g=0.5,b=0.5})
+	} 
   drawing = false
   prev_mouse_pos = {0, 0}
   current_color = palette.blue
@@ -70,6 +82,7 @@ function love.load()
 	))
 	load_op_buttons()
   state_line:load()
+	camera = Camera(0, 0, -1000)
 end
 
 
@@ -78,21 +91,23 @@ local function update_drawing_obj()
     local last_obj = obj_stack[#obj_stack]
     if last_obj then 
       if last_obj.type == 'Points' then
-        table.insert(last_obj.p, Point())
+        table.insert(last_obj.p, Point(love.mouse.getX(), love.mouse.getY()))
+			else
+	      local last_point = last_obj.p[#last_obj.p]
+	      last_point[axis_mode+0], last_point[axis_mode+1] = love.mouse.getPosition() 
       end
-      local last_point = last_obj.p[#last_obj.p]
-      last_point[ axis[axis_mode+0] ], last_point[ axis[axis_mode+1] ] = love.mouse.getPosition() 
     end
   end
 end
 
 local function move_selected_objects()
   if mode_list.active_element.text == 'Edit' and love.mouse.isDown(1) then
+		local mx, my = love.mouse.getPosition()
     for _,obj in ipairs(obj_stack) do
       for _,p in ipairs(obj.p) do
         if p.in_focus then 
-          p[axis[axis_mode+0] ] = p[axis[axis_mode+0] ] + love.mouse.getX() - prev_mouse_pos[1]
-          p[axis[axis_mode+1] ] = p[axis[axis_mode+1] ] + love.mouse.getY() - prev_mouse_pos[2]
+          p[axis_mode+0] = p[axis_mode+0] + mx - prev_mouse_pos[1]
+          p[axis_mode+1] = p[axis_mode+1] + my - prev_mouse_pos[2]
           state_line.chosen_obj = obj
         end
       end
@@ -101,10 +116,10 @@ local function move_selected_objects()
 end
 
 local function update_windows()
-	transform_window:update()
-	transform_window.m = tonumber(table.concat(transform_window.m_in.text)) or 0
-	transform_window.n = tonumber(table.concat(transform_window.n_in.text)) or 0
-	transform_window.l = tonumber(table.concat(transform_window.l_in.text)) or 0
+	translate_window:update()
+	translate_window.m = tonumber(table.concat(translate_window.m_in.text)) or 0
+	translate_window.n = tonumber(table.concat(translate_window.n_in.text)) or 0
+	translate_window.l = tonumber(table.concat(translate_window.l_in.text)) or 0
 	scale_window:update()
 	scale_window.a = tonumber(table.concat(scale_window.a_in.text)) or 1
 	scale_window.b = tonumber(table.concat(scale_window.b_in.text)) or 1
@@ -122,9 +137,9 @@ local function update_windows()
 end
 
 function love.update(dt)
-	for _,v in ipairs(obj_stack) do
-		for _,p in ipairs(v.p) do
-			p:update()
+	if mode_list.active_element.text ~= '3D' then
+		for _,v in ipairs(obj_stack) do
+			for _,p in ipairs(v.p) do p:update() end
 		end
 	end
 	update_drawing_obj()
@@ -134,11 +149,19 @@ function love.update(dt)
 	group_list:update()
   state_line:update()
 	update_windows()
+	camera:update()
   prev_mouse_pos = {love.mouse.getX(), love.mouse.getY()}
 end
 
 
 local function draw_objects()
+	if mode_list.active_element.text == '3D' then
+		local V = {}
+		for _,obj in ipairs(obj_stack) do
+			for _,p in ipairs(obj.p) do table.insert(V, p) end
+		end
+		camera:get_proj(V)
+	end
   for _,v in ipairs(obj_stack) do v:draw() end
 end
 
@@ -146,17 +169,16 @@ local function draw_lists()
   mode_list:draw()
   color_list:draw()
 	group_list:draw()
-  state_line:draw()
 end
 
 local function draw_buttons()
-	transform_button:draw()
+	translate_button:draw()
 	scale_button:draw()
 	rotate_button:draw()
 end
 
 local function draw_windows()
-	transform_window:draw()
+	translate_window:draw()
 	scale_window:draw()
 	rotate_window:draw()
 end
@@ -166,19 +188,22 @@ function love.draw()
 	draw_buttons()
 	draw_lists()
 	draw_windows()
+  if mode_list.active_element.text ~= '3D' then 
+		state_line:draw()
+	end
 end
 
 
 local function activate_win_event(args)
-	transform_window.active = false
+	translate_window.active = false
 	scale_window.active = false
 	rotate_window.active = false
 	args.win.active = true
 end
 
 local function mpressed_buttons(x, y, button)
-	if transform_button:mousepressed(x, y, button, activate_win_event,
-		{win = transform_window}
+	if translate_button:mousepressed(x, y, button, activate_win_event,
+		{win = translate_window}
 	) then return true end
 	if scale_button:mousepressed(x, y, button, activate_win_event,
 		{win = scale_window}
@@ -189,33 +214,34 @@ local function mpressed_buttons(x, y, button)
 end
 
 local function mpressed_windows(x, y, button)
-	if transform_window:mousepressed(x, y, button,
+	local points_matrix = {}
+	for _,obj in ipairs(obj_stack) do
+		if obj.in_focus then 
+			for _,p in ipairs(obj.p) do
+				p[4] = 1
+				table.insert(points_matrix, p)
+			end
+		end
+	end
+	if translate_window:mousepressed(x, y, button,
 		function(args)
-			for _,v in ipairs(args.objects) do
-				if v.in_focus then
-					for _,p in ipairs(v.p) do
-						p.x = p.x + args.win.m
-						p.y = p.y + args.win.n
-						p.z = p.z + args.win.l
-					end
-				end
+			for _,p in ipairs(args.points) do
+				p[1] = p[1] + args.win.m
+				p[2] = p[2] + args.win.n
+				p[3] = p[3] + args.win.l
 			end	
 			args.win.m_in.text = {}
 			args.win.n_in.text = {}
 			args.win.l_in.text = {}
 		end,
-		{objects = obj_stack, win = transform_window}
+		{points = points_matrix, win = translate_window}
 	) then return true end
 	if scale_window:mousepressed(x, y, button,
 		function(args)
-			for _,v in ipairs(args.objects) do
-				if v.in_focus then
-					for _,p in ipairs(v.p) do
-						p.x = (p.x - args.win.m) * args.win.a + args.win.m
-						p.y = (p.y - args.win.n) * args.win.b + args.win.n
-						p.z = (p.z - args.win.l) * args.win.c + args.win.l
-					end
-				end
+			for _,p in ipairs(args.points) do
+				p[1] = (p[1] - args.win.m) * args.win.a + args.win.m
+				p[2] = (p[2] - args.win.n) * args.win.b + args.win.n
+				p[3] = (p[3] - args.win.l) * args.win.c + args.win.l
 			end
 			args.win.a_in.text = {}
 			args.win.b_in.text = {}
@@ -224,7 +250,7 @@ local function mpressed_windows(x, y, button)
 			args.win.n_in.text = {}
 			args.win.l_in.text = {}
 		end,
-		{objects = obj_stack, win = scale_window}
+		{points = points_matrix, win = scale_window}
 	) then return true end
 	if rotate_window:mousepressed(x, y, button,
 		function(args)
@@ -243,23 +269,16 @@ local function mpressed_windows(x, y, button)
 				{sin_a*sin_g-sin_b*cos_a*cos_g, sin_a*cos_g+sin_b*sin_g*cos_a, cos_a*cos_b, 0},
 				{0, 0, 0, 1}
 			}
-			local points_matrix = {}
-			local focused = {}
-			for _,v in ipairs(args.objects) do
-				if v.in_focus then
-					for _,p in ipairs(v.p) do
-						table.insert(focused, p)
-						table.insert(points_matrix, 
-							{p.x - args.win.m, p.y - args.win.n, p.z - args.win.l, 1}
-						)
-					end
-				end
-			end
-			local dot = matrix_dot(points_matrix, rotate_matrix)
+			for i,p in ipairs(args.points) do
+				p[1] = p[1] - args.win.m
+				p[2] = p[2] - args.win.n
+				p[3] = p[3] - args.win.l
+			end	
+			local dot = matrix_dot(args.points, rotate_matrix)
 			for i=1, #dot do
-				focused[i].x = dot[i][1] + args.win.m
-				focused[i].y = dot[i][2] + args.win.n
-				focused[i].z = dot[i][3] + args.win.l
+				args.points[i][1] = dot[i][1] + args.win.m
+				args.points[i][2] = dot[i][2] + args.win.n
+				args.points[i][3] = dot[i][3] + args.win.l
 			end
 			args.win.alpha_in.text = {}
 			args.win.beta_in.text = {}
@@ -268,13 +287,14 @@ local function mpressed_windows(x, y, button)
 			args.win.n_in.text = {}
 			args.win.l_in.text = {}
 		end,
-		{objects = obj_stack, win = rotate_window}
+		{points = points_matrix, win = rotate_window}
 	) then return true end
 end
 
 local function handle_drawing(x, y, button)
   local temp_obj = nil
   if mode_list.active_element.text == 'Edit' then return end
+	if mode_list.active_element.text == '3D' then return end
 	unfocus_all(obj_stack)
 	if mode_list.active_element.text == 'Line' then 
     temp_obj = Line(Point(x,y), Point(x,y))
@@ -308,7 +328,7 @@ end
 
 
 local function mreleased_buttons(x, y, button)
-	transform_button:mousereleased(x, y, button)
+	translate_button:mousereleased(x, y, button)
 	scale_button:mousereleased(x, y, button)
 	rotate_button:mousereleased(x, y, button)
 end
@@ -322,10 +342,10 @@ local function handle_focus(x, y, button)
     for _,v in ipairs(obj_stack) do
       v.in_focus = true
       for _,p in ipairs(v.p) do
-        p.in_focus = p[ axis[axis_mode+0] ] > math.min(focus_rect.p[1][ axis[axis_mode+0] ], focus_rect.p[2][ axis[axis_mode+0] ]) and
-                     p[ axis[axis_mode+0] ] < math.max(focus_rect.p[1][ axis[axis_mode+0] ], focus_rect.p[2][ axis[axis_mode+0] ]) and
-                     p[ axis[axis_mode+1] ] > math.min(focus_rect.p[1][ axis[axis_mode+1] ], focus_rect.p[2][ axis[axis_mode+1] ]) and
-                     p[ axis[axis_mode+1] ] < math.max(focus_rect.p[1][ axis[axis_mode+1] ], focus_rect.p[2][ axis[axis_mode+1] ])
+        p.in_focus = p[axis_mode+0] > math.min(focus_rect.p[1][axis_mode+0], focus_rect.p[2][axis_mode+0]) and
+                     p[axis_mode+0] < math.max(focus_rect.p[1][axis_mode+0], focus_rect.p[2][axis_mode+0]) and
+                     p[axis_mode+1] > math.min(focus_rect.p[1][axis_mode+1], focus_rect.p[2][axis_mode+1]) and
+                     p[axis_mode+1] < math.max(focus_rect.p[1][axis_mode+1], focus_rect.p[2][axis_mode+1])
         v.in_focus = v.in_focus and p.in_focus
         one_focused = one_focused or p.in_focus
       end
@@ -350,12 +370,12 @@ local function mreleased_lists(x, y, button)
 		if drawing then table.remove(obj_stack) end
 		unfocus_all(obj_stack)
 		focus_all(groups[i-1].elements) 
-		mode_list:set_active('Edit')
+		-- mode_list:set_active('Edit')
 	end
 end
 
 local function mreleased_windows(x, y, button)
-	transform_window:mousereleased(x, y, button)
+	translate_window:mousereleased(x, y, button)
 	scale_window:mousereleased(x, y, button)
 	rotate_window:mousereleased(x, y, button)
 end
@@ -403,14 +423,24 @@ local function handle_hotkeys(key)local save_filename = 'save'
 		unfocus_all(obj_stack)
 		mode_list:set_active('Focus')
 	elseif key == 'tab' then
-		axis_mode = math.fmod(axis_mode, 3) + 1
+		axis_mode = math.fmod(axis_mode, 2) + 1
   end
 end
 
 function love.keypressed(key)
 	if state_line:keypressed(key) then return end
-	if transform_window:keypressed(key) then return end
+	if translate_window:keypressed(key) then return end
 	if scale_window:keypressed(key) then return end
 	if rotate_window:keypressed(key) then return end
 	handle_hotkeys(key)
 end 
+
+function love.wheelmoved(x, y) 
+	camera:wheelmoved(x, y)
+end
+
+function love.mousemoved(x, y, dx, dy)
+	if mode_list.active_element.text == '3D' then 
+		camera:mousemoved(x, y, dx, dy)
+	end
+end

@@ -6,7 +6,7 @@ require 'point'
 function serialize(obj, filename)
    local str = string.format('%s %f %f %f ', obj.type, obj.color.r, obj.color.g, obj.color.b)
    for _,v in ipairs(obj.p) do
-   	str = str .. string.format('%d %d ', v.x, v.y)
+   	str = str .. string.format('%d %d %d', v.x, v.y, v.z)
    end
    str = str .. '\n'
   love.filesystem.append(filename, str)
@@ -24,8 +24,12 @@ function deserialize(line)
   if obj == nil then return nil end
   obj.color = {r=words[2], g=words[3], b=words[4]}
   obj.p = {}
-  for i=5, #words, 2 do
-  	table.insert(obj.p, Point(tonumber(words[i]), tonumber(words[i+1])))
+  for i=5, #words, 3 do
+		local temp_p = Point()
+		temp_p.x = tonumber(words[i+0])
+		temp_p.y = tonumber(words[i+1])
+		temp_p.z = tonumber(words[i+2])
+  	table.insert(obj.p, temp_p)
   end
   return obj
 end

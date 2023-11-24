@@ -1,8 +1,8 @@
-function Line(p1, p2)
+function Line(p1, p2, color)
   local this = {}
   this.type = 'Line'
   this.p = {p1, p2}
-  this.color = {r=1,g=1,b=1}
+  this.color = color or {r=1,g=1,b=1}
 
   function this:draw()
     setColor(self.color)

@@ -10,7 +10,10 @@ function Points(color)
   function this:draw()
     setColor(self.color)
     for i=2, #self.p do
-      love.graphics.line(self.p[i-1].x, self.p[i-1].y, self.p[i].x, self.p[i].y)
+      love.graphics.line(
+				self.p[i-1].screen_x, self.p[i-1].screen_y, 
+				self.p[i].screen_x, self.p[i].screen_y
+			)
     end
     for _,v in ipairs(self.p) do v:draw() end
   end

@@ -1,6 +1,8 @@
 require 'ui'
 require 'axis'
 
+local axis = {'x', 'y', 'z'}
+
 local function gcd(a, b)
   if a == 0 then return b end
   return gcd(math.fmod(b, a), a)
@@ -43,13 +45,13 @@ function state_line:draw()
 	)
   if not self.chosen_obj then return end
   if self.chosen_obj.type ~= 'Line' then return end
-  local x1, y1 = self.chosen_obj.p[1].x, self.chosen_obj.p[1].y
+  local x1, y1 = self.chosen_obj.p[1][axis_mode+0], self.chosen_obj.p[1][axis_mode+1]
   if self.a_input.active then
-    self.chosen_obj.p[2].y = (tonumber(table.concat(self.a_input.text)) or 0) + y1
+    self.chosen_obj.p[2][axis_mode+1] = (tonumber(table.concat(self.a_input.text)) or 0) + y1
 	elseif self.b_input.active then
-	  self.chosen_obj.p[2].x = -(tonumber(table.concat(self.b_input.text)) or 0) + x1
+	  self.chosen_obj.p[2][axis_mode+0] = -(tonumber(table.concat(self.b_input.text)) or 0) + x1
 	end
-  local x2, y2 = self.chosen_obj.p[2].x, self.chosen_obj.p[2].y
+  local x2, y2 = self.chosen_obj.p[2][axis_mode+0], self.chosen_obj.p[2][axis_mode+1]
   local A = y2 - y1
   local B = -x2 + x1
   local C = -y1 * B - x1 * A
@@ -66,7 +68,7 @@ function state_line:draw()
   love.graphics.print(type_text, self.x + 4, self.y + 4)
   self.a_input.x = love.graphics.getFont():getWidth(type_text) + 16
 	self.a_input:draw()
-	love.graphics.print(axis[axis_mode]..' + ', self.a_input.x + self.a_input.width + 2, self.y + 4)
+	love.graphics.print(axis[axis_mode+0]..' + ', self.a_input.x + self.a_input.width + 2, self.y + 4)
 	self.b_input.x = self.a_input.x + self.a_input.width + 2 + 40
 	self.b_input:draw()
 	love.graphics.print(axis[axis_mode+1]..' + ', self.b_input.x + self.b_input.width + 2, self.y + 4)

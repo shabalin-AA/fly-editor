@@ -1,2 +1,2 @@
 #!/bin/bash
-open -n -a love $(pwd)
+open -n -a love ./
