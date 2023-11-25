@@ -8,7 +8,6 @@ require 'serialize'
 require 'state_line'
 require 'grouping'
 require 'popup_windows'
-require 'matrix'
 require 'axis'
 require 'camera'
 
@@ -43,7 +42,7 @@ local function load_color_list()
     color_list:add_element(UI:Label(UI:Rect(), 'red'))
     color_list:add_element(UI:Label(UI:Rect(), 'green'))
     color_list:add_element(UI:Label(UI:Rect(), 'blue'))
-    -- color_list:add_element(UI:Label(UI:Rect(), 'lightbrown'))
+    color_list:add_element(UI:Label(UI:Rect(), 'lightbrown'))
 end
 
 local function load_op_buttons()
@@ -66,7 +65,7 @@ function love.load()
 	local k = Point()
 	k[1], k[2], k[3], k[4] = 0, 0, 1000, 1
   obj_stack = {
-		Line(o,i,{r=0.5,g=0.5,b=0.5}), Line(o,j,{r=0.5,g=0.5,b=0.5}), Line(o,k,{r=0.5,g=0.5,b=0.5})
+		Line(o,i,palette.red), Line(o,j,palette.green), Line(o,k,palette.blue)
 	} 
   drawing = false
   prev_mouse_pos = {0, 0}
@@ -82,7 +81,7 @@ function love.load()
 	))
 	load_op_buttons()
   state_line:load()
-	camera = Camera(0, 0, -1000)
+	camera = Camera(0, 0, -3000)
 end
 
 
@@ -254,21 +253,16 @@ local function mpressed_windows(x, y, button)
 	) then return true end
 	if rotate_window:mousepressed(x, y, button,
 		function(args)
-			local a = args.win.alpha * 180 / math.pi
-			local b = args.win.beta * 180 / math.pi
-			local g = args.win.gamma * 180 / math.pi
+			local a = args.win.alpha * math.pi / 180
+			local b = args.win.beta * math.pi / 180
+			local g = args.win.gamma * math.pi / 180
 			local sin_a = math.sin(a)
 			local cos_a = math.cos(a)
 			local sin_b = math.sin(b)
 			local cos_b = math.cos(b)
 			local sin_g = math.sin(g)
 			local cos_g = math.cos(g)
-			local rotate_matrix = {
-				{cos_b*cos_g, -sin_g*cos_b, sin_b, 0},
-				{sin_a*sin_b*cos_g+sin_g*cos_a, -sin_a*sin_b*sin_g+cos_a*cos_g, -sin_a*cos_b, 0},
-				{sin_a*sin_g-sin_b*cos_a*cos_g, sin_a*cos_g+sin_b*sin_g*cos_a, cos_a*cos_b, 0},
-				{0, 0, 0, 1}
-			}
+			local rotate_matrix = matrix_dot(matrix_dot(rot_x(a), rot_y(b)), rot_z(g))
 			for i,p in ipairs(args.points) do
 				p[1] = p[1] - args.win.m
 				p[2] = p[2] - args.win.n
@@ -403,7 +397,9 @@ local function handle_hotkeys(key)local save_filename = 'save'
       end
 		elseif key == 'a' then
 			focus_all(obj_stack)
-			mode_list:set_active('Edit')
+			if mode_list.active_element.text ~= '3D' then 
+				mode_list:set_active('Edit')
+			end
 		elseif key == 'g' then
 			local group = {}
 			for _,v in ipairs(obj_stack) do
@@ -424,6 +420,10 @@ local function handle_hotkeys(key)local save_filename = 'save'
 		mode_list:set_active('Focus')
 	elseif key == 'tab' then
 		axis_mode = math.fmod(axis_mode, 2) + 1
+	elseif key == '3' then 
+		mode_list:set_active('3D')
+	elseif key == 'r' then
+		camera = Camera(0, 0, -3000)
   end
 end
 

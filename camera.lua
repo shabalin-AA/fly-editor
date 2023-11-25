@@ -23,17 +23,26 @@ end
 function rot_x(angle)
 	return {
 		{1, 0, 0, 0},
-		{0, math.cos(angle), math.sin(angle), 0},
-		{0, -math.sin(angle), math.cos(angle), 0},
+		{0, math.cos(angle), -math.sin(angle), 0},
+		{0, math.sin(angle), math.cos(angle), 0},
 		{0, 0, 0, 1}
 	}
 end
 
 function rot_y(angle)
 	return {
-		{math.cos(angle), 0, -math.sin(angle), 0},
+		{math.cos(angle), 0, math.sin(angle), 0},
 		{0, 1, 0, 0},
-		{math.sin(angle), 0, math.cos(angle), 0},
+		{-math.sin(angle), 0, math.cos(angle), 0},
+		{0, 0, 0, 1}
+	}
+end
+
+function rot_z(angle)
+	return {
+		{math.cos(angle), -math.sin(angle), 0, 0},
+		{math.sin(angle), math.cos(angle), 0, 0},
+		{0, 0, 1, 0},
 		{0, 0, 0, 1}
 	}
 end
@@ -42,9 +51,9 @@ function Camera(x, y, z, n, f, h_fov)
 	local this = {}
 	this.x = x or 0
 	this.y = y or 0
-	this.z = z or -100
-	this.n = n or 0.1
-	this.f = f or 100
+	this.z = z or -1000
+	this.n = n or 1
+	this.f = f or 1000
 	this.h_fov = h_fov or math.pi / 3
 	this.v_fov = this.h_fov * love.graphics.getHeight() / love.graphics.getWidth()
 	
@@ -144,10 +153,11 @@ function Camera(x, y, z, n, f, h_fov)
 	end
 	
 	function this:mousemoved(x, y, dx, dy)
-		local speed = 10
+		local speed = 1
 		if love.mouse.isDown(1) then
-		  self.yaw = self.yaw + dx * 0.01 / math.pi
-		  self.pitch = self.pitch - dy * 0.01 / math.pi
+		  self.yaw = self.yaw - dx * 0.001 / math.pi
+		  self.pitch = self.pitch + dy * 0.001 / math.pi
+			return true
 		elseif love.mouse.isDown(2) then
 			self.x = self.x + self.right[1] * speed * dx
 			self.y = self.y + self.right[2] * speed * dx
@@ -155,6 +165,7 @@ function Camera(x, y, z, n, f, h_fov)
 			self.x = self.x - self.up[1] * speed * dy
 			self.y = self.y - self.up[2] * speed * dy
 			self.z = self.z - self.up[3] * speed * dy
+			return true
 		end
 	end
 	
@@ -163,6 +174,7 @@ function Camera(x, y, z, n, f, h_fov)
 		self.x = self.x + self.forward[1] * speed * y
 		self.y = self.y + self.forward[2] * speed * y
 		self.z = self.z + self.forward[3] * speed * y
+		return true
 	end
 	
 	return this

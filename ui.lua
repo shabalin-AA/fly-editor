@@ -140,6 +140,15 @@ function UI:FoldList(list)
 		end
 	end
 	
+	this.mousereleased_list = this.mousereleased
+	
+	function this:mousereleased(x, y, b)
+		if not self.folded then
+			self:mousereleased_list(x, y, b)
+			return true
+		end
+	end
+	
 	this.draw_list = this.draw
 	
 	function this:draw()
