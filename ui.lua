@@ -100,7 +100,7 @@ function UI:List(header_label)
 				return v, i
       end
     end
-		return true
+		return false
   end
 
   function this:set_active(name)
@@ -144,9 +144,10 @@ function UI:FoldList(list)
 	
 	function this:mousereleased(x, y, b)
 		if not self.folded then
-			self:mousereleased_list(x, y, b)
-			return true
+			local v,i = self:mousereleased_list(x, y, b)
+			return v,i
 		end
+		return false
 	end
 	
 	this.draw_list = this.draw
@@ -348,6 +349,18 @@ function UI:Window(rect, title)
 			v:keypressed(key)
 		end
 		return true
+	end
+	
+	function this:mousemoved(x, y, dx, dy)
+		if not self.active then return false end
+		if not self.elements[1]:focused() then return false end
+		if love.mouse.isDown(1) then
+			for _,v in ipairs(self.elements) do
+				v.x = v.x + dx
+				v.y = v.y + dy
+			end
+			return true
+		end
 	end
 	
 	return this

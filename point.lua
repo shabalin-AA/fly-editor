@@ -1,5 +1,6 @@
 function Point(screen_x, screen_y)
   local this = {}
+	
   this.type = 'point'
   this[axis_mode+0] = screen_x or 0
   this[axis_mode+1] = screen_y or 0

@@ -119,6 +119,7 @@ function Camera(x, y, z, n, f, h_fov)
 	end
 	
 	function this:update()
+		self.v_fov = self.h_fov * love.graphics.getHeight() / love.graphics.getWidth()
 		local speed = 10
 		if love.keyboard.isDown('a') then
 			self.x = self.x - self.right[1] * speed
@@ -153,10 +154,10 @@ function Camera(x, y, z, n, f, h_fov)
 	end
 	
 	function this:mousemoved(x, y, dx, dy)
-		local speed = 1
+		local speed = 2
 		if love.mouse.isDown(1) then
-		  self.yaw = self.yaw - dx * 0.001 / math.pi
-		  self.pitch = self.pitch + dy * 0.001 / math.pi
+		  self.yaw = self.yaw - dx * speed * 0.001 / math.pi
+		  self.pitch = self.pitch + dy * speed * 0.001 / math.pi
 			return true
 		elseif love.mouse.isDown(2) then
 			self.x = self.x + self.right[1] * speed * dx

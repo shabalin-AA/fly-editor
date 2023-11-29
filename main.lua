@@ -69,7 +69,7 @@ function love.load()
 	} 
   drawing = false
   prev_mouse_pos = {0, 0}
-  current_color = palette.blue
+  current_color = palette.lightbrown
 	groups = {}
 	load_mode_list()
 	load_color_list()
@@ -190,6 +190,7 @@ function love.draw()
   if mode_list.active_element.text ~= '3D' then 
 		state_line:draw()
 	end
+	setColor(palette.blue)
 end
 
 
@@ -289,7 +290,7 @@ local function handle_drawing(x, y, button)
   local temp_obj = nil
   if mode_list.active_element.text == 'Edit' then return end
 	if mode_list.active_element.text == '3D' then return end
-	unfocus_all(obj_stack)
+	unfocus_all(obj_stack) 
 	if mode_list.active_element.text == 'Line' then 
     temp_obj = Line(Point(x,y), Point(x,y))
   elseif mode_list.active_element.text == 'Rectangle' then 
@@ -384,17 +385,15 @@ function love.mousereleased(x, y, button)
 end
 
 
-local function handle_hotkeys(key)local save_filename = 'save'
+local function handle_hotkeys(key)
   if love.keyboard.isDown('lctrl') then
     if key == 'z' then 
 			table.remove(obj_stack)
 		elseif key == 's' then 
-      love.filesystem.write(save_filename, '')
-      for _,v in ipairs(obj_stack) do serialize(v, save_filename) end
-		elseif key == 'l' then
-      for line in love.filesystem.lines(save_filename) do
-        table.insert(obj_stack, deserialize(line))
-      end
+			local save_filename = tostring('save_'..os.date("%d_%m_%Y_%H_%M_%S"))
+			local res,err = love.filesystem.write(save_filename, '')
+      for i=4, #obj_stack do serialize(obj_stack[i], save_filename) end
+			-- load functionality in filedropped function
 		elseif key == 'a' then
 			focus_all(obj_stack)
 			if mode_list.active_element.text ~= '3D' then 
@@ -440,7 +439,16 @@ function love.wheelmoved(x, y)
 end
 
 function love.mousemoved(x, y, dx, dy)
+	if translate_window:mousemoved(x, y, dx, dy) then return end
+	if scale_window:mousemoved(x, y, dx, dy) then return end
+	if rotate_window:mousemoved(x, y, dx, dy) then return end
 	if mode_list.active_element.text == '3D' then 
 		camera:mousemoved(x, y, dx, dy)
+	end
+end
+
+function love.filedropped(file)
+	for line in io.lines(file:getFilename()) do
+		table.insert(obj_stack, deserialize(line))
 	end
 end

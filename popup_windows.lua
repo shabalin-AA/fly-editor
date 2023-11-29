@@ -2,9 +2,9 @@ require 'ui'
 
 local win_w = 250
 local win_h = 200
-local W, H = love.window.getDesktopDimensions()
+local W, H = love.graphics.getDimensions()
 local win_x = W/2 - win_w/2
-local win_y = H/2 - win_h/2 - 100
+local win_y = H/2 - win_h/2
 
 -- translate window
 translate_window = UI:Window(
